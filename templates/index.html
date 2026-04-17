@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --sidebar-bg: #1e293b;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --accent-color: #38bdf8;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 260px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+        }
+
+        .nav-item.active {
+            background: var(--accent-color);
+            color: #000;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            padding: 3rem;
+            overflow-y: auto;
+            background-image: 
+                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.03) 0%, transparent 50%);
+        }
+
+        .view {
+            display: none;
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+        .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+
+        .input-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+
+        textarea, input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text-color);
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+        }
+
+        button {
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px -3px rgba(56, 189, 248, 0.3);
+        }
+
+        .status {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.3);
+            border-left: 4px solid var(--accent-color);
+            display: none;
+        }
+
+        .response {
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0,0,0,.1);
+            border-radius: 50%;
+            border-top-color: #000;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <i data-lucide="bot"></i> Agent Platform
+        </div>
+        
+        <div class="nav-item active" onclick="switchView('meeting-view', this)">
+            <i data-lucide="calendar"></i> Meeting Scheduler
+        </div>
+        
+        <div class="nav-item" onclick="switchView('job-view', this)">
+            <i data-lucide="briefcase"></i> Job Application
+        </div>
+
+        <div style="margin-top: auto; color: var(--text-muted); font-size: 0.8rem; padding: 1rem;">
+            v2.0 Beta
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Meeting View -->
+        <div id="meeting-view" class="view active">
+            <div class="card">
+                <h1>Meeting Agent</h1>
+                <p class="subtitle">AI-powered scheduler for Google Meet</p>
+                
+                <div class="input-group">
+                    <textarea id="meeting-prompt" placeholder="e.g., Schedule a 30m sync with john@example.com tomorrow at 10 AM..."></textarea>
+                </div>
+                
+                <button id="meeting-btn" onclick="runMeetingAgent()">Schedule Meeting</button>
+                <button id="meeting-done-btn" onclick="resetMeetingUI()" style="display:none; background:#10b981; margin-top:1rem;">Done! Schedule Another?</button>
+
+                <div id="meeting-status" class="status">Processing...</div>
+                <div id="meeting-response" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Job View -->
+        <div id="job-view" class="view">
+            <div class="card">
+                <h1>Job Application Agent</h1>
+                <p class="subtitle">Bulk personalize and send applications to recruiters</p>
+                
+                <div class="input-group">
+                    <label>Input Mode</label>
+                    <div style="display: flex; gap: 20px; margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="radio" name="input-mode" value="manual" checked onclick="toggleInputMode('manual')" style="width: auto;"> Manual Input
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="radio" name="input-mode" value="csv" onclick="toggleInputMode('csv')" style="width: auto;"> CSV Upload
+                        </label>
+                    </div>
+                </div>
+
+                <div id="manual-input-group">
+                    <div class="input-group">
+                        <label>Recruiter Emails (One per line or comma separated)</label>
+                        <textarea id="job-emails" placeholder="recruiter1@company.com, recruiter2@firm.com..."></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Target Position</label>
+                        <input type="text" id="job-position" placeholder="e.g. AI Engineer, Senior Developer...">
+                    </div>
+                </div>
+
+                <div id="csv-input-group" style="display: none;">
+                    <div class="input-group">
+                        <label>Upload CSV File (Columns: email, position)</label>
+                        <input type="file" id="job-csv" accept=".csv" style="padding: 0.5rem;">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Upload Resume (Attachment)</label>
+                    <input type="file" id="job-resume" accept=".pdf,.doc,.docx" style="padding: 0.5rem;">
+                </div>
+
+                <div class="input-group">
+                    <label>Cover Letter Source</label>
+                    <div style="display: flex; gap: 20px; margin-bottom: 1rem;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="radio" name="job-mode" value="generate" checked onclick="toggleCustomLetter(false)" style="width: auto;"> Generate from Resume
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="radio" name="job-mode" value="existing" onclick="toggleCustomLetter(true)" style="width: auto;"> Use My Own Letter
+                        </label>
+                    </div>
+                </div>
+
+                <div id="custom-letter-group" class="input-group" style="display: none;">
+                    <label>Your Existing Cover Letter</label>
+                    <textarea id="job-custom-letter" placeholder="Paste your existing cover letter here..."></textarea>
+                </div>
+                
+                <button id="job-btn" onclick="runJobAgent()">Send Applications</button>
+                <button id="job-done-btn" onclick="resetJobUI()" style="display:none; background:#10b981; margin-top:1rem;">Batch Sent! Start New?</button>
+
+                <div id="job-status" class="status">Generating and sending emails...</div>
+                <div id="job-response" class="response"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        function switchView(viewId, element) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            document.getElementById(viewId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // Meeting Agent Logic
+        async function runMeetingAgent() {
+            const prompt = document.getElementById('meeting-prompt').value;
+            const btn = document.getElementById('meeting-btn');
+            const status = document.getElementById('meeting-status');
+            const responseDiv = document.getElementById('meeting-response');
+
+            if (!prompt) return alert("Enter a prompt");
+
+            btn.disabled = true;
+            btn.innerHTML = 'Scheduling... <div class="spinner"></div>';
+            status.style.display = 'block';
+
+            try {
+                const res = await fetch('/api/schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt })
+                });
+                const data = await res.json();
+                responseDiv.innerHTML = data.error ? "Error: " + data.error : data.response.replace(/\n/g, '<br>');
+                if(!data.error) {
+                    btn.style.display = 'none';
+                    document.getElementById('meeting-done-btn').style.display = 'block';
+                }
+            } catch (e) { responseDiv.innerHTML = "Error connecting to server"; }
+            btn.disabled = false;
+            btn.innerHTML = 'Schedule Meeting';
+        }
+
+        function resetMeetingUI() {
+            document.getElementById('meeting-prompt').value = '';
+            document.getElementById('meeting-response').innerHTML = '';
+            document.getElementById('meeting-status').style.display = 'none';
+            document.getElementById('meeting-done-btn').style.display = 'none';
+            document.getElementById('meeting-btn').style.display = 'block';
+        }
+
+        // Job Agent Logic
+        async function runJobAgent() {
+            const inputMode = document.querySelector('input[name="input-mode"]:checked').value;
+            const emails = document.getElementById('job-emails').value;
+            const position = document.getElementById('job-position').value;
+            const csvFile = document.getElementById('job-csv').files[0];
+            
+            const mode = document.querySelector('input[name="job-mode"]:checked').value;
+            const custom_letter = document.getElementById('job-custom-letter').value;
+            const resumeFile = document.getElementById('job-resume').files[0];
+            
+            const btn = document.getElementById('job-btn');
+            const status = document.getElementById('job-status');
+            const responseDiv = document.getElementById('job-response');
+
+            if (inputMode === 'manual' && (!emails || !position)) return alert("Emails and Position are required");
+            if (inputMode === 'csv' && !csvFile) return alert("Please upload a CSV file");
+            if (mode === 'existing' && !custom_letter) return alert("Please provide your cover letter");
+
+            btn.disabled = true;
+            btn.innerHTML = 'Processing Batch... <div class="spinner"></div>';
+            status.style.display = 'block';
+
+            // Use FormData for file upload
+            const formData = new FormData();
+            formData.append('mode', mode);
+            formData.append('custom_letter', custom_letter);
+            
+            if (inputMode === 'manual') {
+                formData.append('emails', emails);
+                formData.append('position', position);
+            } else {
+                formData.append('csv_file', csvFile);
+            }
+
+            if (resumeFile) {
+                formData.append('resume', resumeFile);
+            }
+
+            try {
+                const res = await fetch('/api/job-apply', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                responseDiv.innerHTML = data.error ? "Error: " + data.error : data.response.replace(/\n/g, '<br>');
+                if(!data.error) {
+                    btn.style.display = 'none';
+                    document.getElementById('job-done-btn').style.display = 'block';
+                }
+            } catch (e) { responseDiv.innerHTML = "Error connecting to server"; }
+            btn.disabled = false;
+            btn.innerHTML = 'Send Applications';
+        }
+
+        function resetJobUI() {
+            document.getElementById('job-emails').value = '';
+            document.getElementById('job-position').value = '';
+            document.getElementById('job-resume').value = '';
+            document.getElementById('job-csv').value = '';
+            document.getElementById('job-custom-letter').value = '';
+            document.getElementById('job-response').innerHTML = '';
+            document.getElementById('job-status').style.display = 'none';
+            document.getElementById('job-done-btn').style.display = 'none';
+            document.getElementById('job-btn').style.display = 'block';
+            toggleCustomLetter(false);
+            toggleInputMode('manual');
+            document.querySelector('input[value="generate"]').checked = true;
+            document.querySelector('input[value="manual"]').checked = true;
+        }
+
+        function toggleCustomLetter(show) {
+            document.getElementById('custom-letter-group').style.display = show ? 'block' : 'none';
+        }
+
+        function toggleInputMode(mode) {
+            document.getElementById('manual-input-group').style.display = mode === 'manual' ? 'block' : 'none';
+            document.getElementById('csv-input-group').style.display = mode === 'csv' ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>
