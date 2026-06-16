@@ -8,9 +8,11 @@ load_dotenv()
 
 class SchedulerAgent:
     def __init__(self, google_services):
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("GROQ_API_BASE") or os.getenv("OPENAI_API_BASE")
+        self.client = OpenAI(api_key=api_key, base_url=base_url) if base_url else OpenAI(api_key=api_key)
         self.google_services = google_services
-        self.model = "gpt-4o"
+        self.model = os.getenv("GROQ_MODEL_NAME") or os.getenv("OPENAI_MODEL_NAME") or "gpt-4o"
 
     def _get_tools(self):
         return [
@@ -18,17 +20,51 @@ class SchedulerAgent:
                 "type": "function",
                 "function": {
                     "name": "create_calendar_event",
-                    "description": "Create a Google Calendar event with a Google Meet link.",
+                    "description": "Create a Google Calendar event with a Google Meet link. For Focus Blocks or personal blocks, leave attendee_email empty.",
                     "parameters": {
                         "type": "object",
                         "properties": {
                             "summary": {"type": "string", "description": "Title of the meeting"},
                             "description": {"type": "string", "description": "Agenda or details of the meeting"},
-                            "start_time": {"type": "string", "description": "Start time in ISO 8601 format (e.g., 2023-10-27T10:00:00Z)"},
+                            "start_time": {"type": "string", "description": "Start time in ISO 8601 format (e.g., 2026-06-15T10:00:00Z)"},
                             "duration_minutes": {"type": "integer", "description": "Duration of the meeting in minutes"},
-                            "attendee_email": {"type": "string", "description": "Email address of the person to invite"}
+                            "attendee_email": {"type": "string", "description": "Email address of the person to invite (optional, leave empty for Focus Blocks)"}
                         },
-                        "required": ["summary", "start_time", "duration_minutes", "attendee_email"]
+                        "required": ["summary", "start_time", "duration_minutes"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "reschedule_calendar_event",
+                    "description": "Reschedule an existing calendar event to a new date/time.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "search_query": {"type": "string", "description": "Query to identify the event (e.g. name of attendee, title, or date)"},
+                            "new_start_time": {"type": "string", "description": "New start time in ISO 8601 format (e.g., 2026-06-17T14:30:00Z)"},
+                            "duration_minutes": {"type": "integer", "description": "Duration in minutes (optional)"},
+                            "start_date": {"type": "string", "description": "Start date of the event in YYYY-MM-DD format (optional)"},
+                            "attendee_email": {"type": "string", "description": "Email address of attendee (optional)"}
+                        },
+                        "required": ["search_query", "new_start_time"]
+                    }
+                }
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "cancel_calendar_event",
+                    "description": "Cancel and delete an existing calendar event.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "search_query": {"type": "string", "description": "Query to identify the event (e.g. name of attendee, title, or date)"},
+                            "start_date": {"type": "string", "description": "Start date of the event in YYYY-MM-DD format (optional)"},
+                            "attendee_email": {"type": "string", "description": "Email address of attendee (optional)"}
+                        },
+                        "required": ["search_query"]
                     }
                 }
             },
@@ -51,7 +87,7 @@ class SchedulerAgent:
         ]
 
     def process_prompt(self, user_prompt):
-        now = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+        now = datetime.now().astimezone().strftime("%Y-%m-%dT%H:%M:%S%z (%A)")
         messages = [
             {"role": "system", "content": f"You are an expert meeting scheduler agent. Current time is {now}. "
                                           "Your goal is to schedule a meeting and then send a confirmation email. "
@@ -76,12 +112,15 @@ class SchedulerAgent:
         if tool_calls:
             messages.append(response_message)
             
-            # Step 1: Create Calendar Event
+            # Step 1: Create/Modify Calendar Event
             for tool_call in tool_calls:
                 if tool_call.function.name == "create_calendar_event":
                     args = json.loads(tool_call.function.arguments)
-                    print(f"--- Creating Calendar Event: {args['summary']} ---")
+                    print(f"--- Creating Calendar Event: {args.get('summary')} ---")
                     result = self.google_services.create_calendar_event(**args)
+                    
+                    if isinstance(result, dict) and result.get("conflict"):
+                        return result
                     
                     messages.append({
                         "role": "tool",
@@ -90,8 +129,35 @@ class SchedulerAgent:
                         "content": json.dumps(result)
                     })
 
-                    if "meetLink" in result:
+                    if isinstance(result, dict) and "meetLink" in result:
                         print(f"--- GMeet Link Generated: {result['meetLink']} ---")
+                
+                elif tool_call.function.name == "reschedule_calendar_event":
+                    args = json.loads(tool_call.function.arguments)
+                    print(f"--- Rescheduling Calendar Event: {args.get('search_query')} ---")
+                    result = self.google_services.reschedule_calendar_event(**args)
+                    
+                    if isinstance(result, dict) and result.get("conflict"):
+                        return result
+                        
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": "reschedule_calendar_event",
+                        "content": json.dumps(result)
+                    })
+                    
+                elif tool_call.function.name == "cancel_calendar_event":
+                    args = json.loads(tool_call.function.arguments)
+                    print(f"--- Cancelling Calendar Event: {args.get('search_query')} ---")
+                    result = self.google_services.cancel_calendar_event(**args)
+                    
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "name": "cancel_calendar_event",
+                        "content": json.dumps(result)
+                    })
             
             # Step 2: Second completion to handle the email (using the result from step 1)
             second_response = self.client.chat.completions.create(

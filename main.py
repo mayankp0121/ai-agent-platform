@@ -17,8 +17,8 @@ def main():
         print("5. Download the JSON and rename it to 'credentials.json'.")
         return
 
-    if not os.getenv("OPENAI_API_KEY"):
-        print("Error: OPENAI_API_KEY not found in .env file.")
+    if not os.getenv("GROQ_API_KEY") and not os.getenv("OPENAI_API_KEY"):
+        print("Error: Neither GROQ_API_KEY nor OPENAI_API_KEY found in .env file.")
         return
 
     try:

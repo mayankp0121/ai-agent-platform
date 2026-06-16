@@ -4,169 +4,383 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Agent Platform</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-color: #0f172a;
-            --sidebar-bg: #1e293b;
-            --card-bg: rgba(30, 41, 59, 0.7);
-            --accent-color: #38bdf8;
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: rgba(255, 255, 255, 0.1);
+            --bg-color: #100f1a;
+            --sidebar-bg: #15131f;
+            --card-bg: rgba(255,255,255,0.035);
+            --text-color: #f5f1ea;
+            --text-muted: #9089a3;
+            --accent: #ff7a59;
+            --accent-2: #ffd166;
+            --accent-3: #4ecdc4;
+            --border-color: rgba(255,255,255,0.09);
             --sidebar-width: 260px;
         }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
             background-color: var(--bg-color);
+            background-image:
+                radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 28px 28px;
             color: var(--text-color);
             display: flex;
             height: 100vh;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated ambient background */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(110px);
+            opacity: 0.35;
+            z-index: 0;
+            pointer-events: none;
+        }
+        body::before {
+            width: 480px; height: 480px;
+            background: var(--accent);
+            top: -150px; left: -100px;
+            animation: float1 18s ease-in-out infinite;
+        }
+        body::after {
+            width: 420px; height: 420px;
+            background: var(--accent-3);
+            bottom: -150px; right: -100px;
+            animation: float2 22s ease-in-out infinite;
+        }
+        .orb3 {
+            content: '';
+            position: fixed;
+            width: 320px; height: 320px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.22;
+            z-index: 0;
+            pointer-events: none;
+            background: var(--accent-2);
+            top: 40%;
+            left: 45%;
+            animation: float3 26s ease-in-out infinite;
+        }
+        @keyframes float3 {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            50% { transform: translate(-100px, 70px) scale(1.2); }
+        }
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(80px, 60px) scale(1.15); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(-60px, -50px) scale(1.1); }
         }
 
         /* Sidebar Styles */
         .sidebar {
             width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            flex-shrink: 0;
             background: var(--sidebar-bg);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
+            padding: 2rem 1.5rem;
+            box-sizing: border-box;
+            z-index: 5;
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 2.5rem;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
             display: flex;
             align-items: center;
-            gap: 10px;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
+            gap: 12px;
+            letter-spacing: -0.5px;
+        }
+        .logo span {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        .logo .mark {
+            width: 34px; height: 34px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #15131f; font-size: 1rem;
+            transform: rotate(-6deg);
+            box-shadow: 0 6px 18px rgba(255,122,89,0.35);
+        }
+        .logo i { display: none; }
+
+        .nav-section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin: 0 0 0.75rem 0.25rem;
+            font-weight: 500;
+        }
+
+        .icon-badge {
+            width: 52px;
+            height: 52px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(255,122,89,0.2), rgba(78,205,196,0.2));
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.25rem;
+            transform: rotate(-4deg);
+            box-shadow: 0 8px 24px rgba(255,122,89,0.15);
+        }
+        .icon-badge i { width: 26px; height: 26px; color: var(--accent-2); }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 0.5rem;
+        }
+        .header-row .icon-badge { margin-bottom: 0; }
+        .header-text h1 { margin-bottom: 0.25rem; }
 
         .nav-item {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 1rem;
-            border-radius: 12px;
+            padding: 0.85rem 1rem;
+            border-radius: 10px;
             cursor: pointer;
             color: var(--text-muted);
-            transition: all 0.2s ease;
-            margin-bottom: 0.5rem;
+            transition: all 0.25s ease;
+            margin-bottom: 0.6rem;
             text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+            opacity: 0;
+            animation: fadeUp 0.5s ease forwards;
         }
+        .nav-item:nth-child(2) { animation-delay: 0.05s; }
+        .nav-item:nth-child(3) { animation-delay: 0.1s; }
+        .nav-item:nth-child(4) { animation-delay: 0.15s; }
+        .nav-item:nth-child(5) { animation-delay: 0.2s; }
+        .nav-item i { width: 18px; height: 18px; }
 
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255,255,255,0.04);
             color: var(--text-color);
+            border-color: var(--border-color);
+            transform: translateX(3px);
         }
 
         .nav-item.active {
-            background: var(--accent-color);
-            color: #000;
+            background: rgba(255,122,89,0.1);
+            color: #ffffff;
+            border-color: rgba(255,122,89,0.25);
+            font-weight: 600;
+            position: relative;
         }
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 50%; transform: translateY(-50%);
+            width: 4px; height: 60%;
+            background: linear-gradient(180deg, var(--accent), var(--accent-2));
+            border-radius: 0 4px 4px 0;
+        }
+        .nav-item.active i { color: var(--accent-2); }
 
         /* Main Content Styles */
         .main-content {
             flex: 1;
             padding: 3rem;
             overflow-y: auto;
-            background-image: 
-                radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.05) 0%, transparent 50%),
-                radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.03) 0%, transparent 50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+            position: relative;
         }
 
         .view {
             display: none;
-            max-width: 800px;
-            margin: 0 auto;
-            animation: fadeIn 0.4s ease;
+            width: 100%;
+            max-width: 650px;
+            animation: fadeUp 0.4s ease;
         }
 
         .view.active {
             display: block;
         }
 
-        .card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        #mail-view.active {
+            display: flex;
         }
 
-        h1 { font-size: 2rem; margin-bottom: 0.5rem; }
-        .subtitle { color: var(--text-muted); margin-bottom: 2rem; }
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 3rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        .card:hover {
+            box-shadow: 0 25px 70px rgba(255,122,89,0.15);
+            transform: translateY(-3px);
+        }
+        .card::before, .card::after {
+            content: '';
+            position: absolute;
+            width: 28px; height: 28px;
+            border: 2px solid var(--accent-2);
+            opacity: 0.7;
+        }
+        .card::before {
+            top: -1px; left: -1px;
+            border-right: none; border-bottom: none;
+        }
+        .card::after {
+            bottom: -1px; right: -1px;
+            border-left: none; border-top: none;
+            border-color: var(--accent-3);
+        }
 
-        .input-group { margin-bottom: 1.5rem; }
-        label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        button {
+            position: relative;
+            overflow: hidden;
+        }
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -75%;
+            width: 50%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.6s ease;
+        }
+        button:hover::after { left: 125%; }
+
+        h1 { 
+            font-size: 2.2rem; 
+            margin-bottom: 0.5rem; 
+            font-weight: 700;
+            letter-spacing: -1px;
+            color: #ffffff;
+        }
+        
+        .subtitle { 
+            color: var(--text-muted); 
+            margin-bottom: 2.5rem; 
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .input-group { margin-bottom: 1.75rem; }
+        label { 
+            display: block; 
+            margin-bottom: 0.75rem; 
+            color: var(--accent-2); 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem; 
+            font-weight: 500; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
+        }
 
         textarea, input {
             width: 100%;
-            background: rgba(15, 23, 42, 0.5);
+            background: rgba(255,255,255,0.03);
             border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem;
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
             color: var(--text-color);
-            font-family: inherit;
-            font-size: 1rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.95rem;
             box-sizing: border-box;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         textarea:focus, input:focus {
             outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+            background: rgba(255,255,255,0.05);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(255, 122, 89, 0.12);
         }
 
         button {
-            background: var(--accent-color);
-            color: #000;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #1a1625;
             border: none;
-            padding: 0.8rem 2rem;
-            border-radius: 10px;
+            padding: 1rem 2rem;
+            border-radius: 6px;
             font-size: 1rem;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
             width: 100%;
+            box-shadow: 0 8px 24px rgba(255, 122, 89, 0.25);
+            letter-spacing: 0.3px;
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 12px -3px rgba(56, 189, 248, 0.3);
+            box-shadow: 0 12px 30px rgba(255, 122, 89, 0.4);
+            filter: brightness(1.05);
+        }
+
+        button:active {
+            transform: translateY(0px);
+            box-shadow: 0 4px 14px rgba(255, 122, 89, 0.3);
         }
 
         .status {
             margin-top: 1.5rem;
-            padding: 1rem;
-            border-radius: 12px;
-            background: rgba(15, 23, 42, 0.3);
-            border-left: 4px solid var(--accent-color);
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            color: #ffffff;
+            font-size: 0.9rem;
             display: none;
+            animation: fadeUp 0.3s ease;
         }
 
         .response {
             margin-top: 1.5rem;
             font-size: 0.95rem;
-            line-height: 1.6;
-            color: var(--text-muted);
+            line-height: 1.7;
+            color: #ffffff;
             border-top: 1px solid var(--border-color);
             padding-top: 1.5rem;
         }
 
         @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeUp {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
@@ -175,41 +389,621 @@
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2px solid rgba(0,0,0,.1);
+            border: 2px solid rgba(255,255,255,0.4);
             border-radius: 50%;
-            border-top-color: #000;
+            border-top-color: transparent;
             animation: spin 0.8s linear infinite;
             margin-left: 8px;
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        .mail-list {
+            background: transparent;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .mail-item {
+            display: flex;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            align-items: center;
+            background: transparent;
+            color: #aaaaaa;
+            transition: background 0.2s ease;
+        }
+        
+        .mail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .mail-item:hover {
+            background: rgba(255, 122, 89, 0.08);
+        }
+        
+        .mail-item.unread {
+            background: rgba(255,255,255,0.02);
+        }
+        
+        .mail-item.unread .mail-sender,
+        .mail-item.unread .mail-subject {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        
+        .mail-sender {
+            width: 25%;
+            font-weight: normal;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 15px;
+            font-size: 0.9rem;
+            color: #888888;
+        }
+        
+        .mail-subject {
+            flex: 1;
+            font-weight: normal;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+            color: #888888;
+        }
+        
+        .mail-snippet {
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+        
+        .mail-date {
+            width: 15%;
+            text-align: right;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,122,89,0.4); border-radius: 4px; }
+
+        /* Topbar */
+        .topbar {
+            position: absolute;
+            top: 1.5rem; right: 2rem; left: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 6;
+            pointer-events: none;
+        }
+        .topbar-clock {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 0.6rem 1.1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            pointer-events: auto;
+        }
+        .topbar-clock #topbar-date { color: var(--text-color); font-weight: 600; font-size: 0.85rem; }
+        .theme-toggle {
+            pointer-events: auto;
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: none;
+            padding: 0;
+        }
+        .theme-toggle::after { display: none; }
+        .theme-toggle i { width: 18px; height: 18px; color: var(--accent-2); }
+        .theme-toggle .icon-moon { display: none; }
+        body.light .theme-toggle .icon-sun { display: none; }
+        body.light .theme-toggle .icon-moon { display: block; }
+
+        /* Home button */
+        .home-btn {
+            margin-left: auto;
+            width: 40px; height: 40px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            box-shadow: none;
+            padding: 0;
+        }
+        .home-btn::after { display: none; }
+        .home-btn i { width: 18px; height: 18px; }
+        .home-btn:hover { color: var(--accent-2); border-color: var(--accent-2); transform: none; box-shadow: none; }
+
+        /* Feature grid (home page) */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        .feature-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2.25rem;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+        .feature-card::before, .feature-card::after {
+            content: '';
+            position: absolute;
+            width: 22px; height: 22px;
+            border: 2px solid var(--accent-2);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .feature-card::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+        .feature-card::after { bottom: -1px; right: -1px; border-left: none; border-top: none; border-color: var(--accent-3); }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: transparent;
+            box-shadow: 0 20px 50px rgba(255,122,89,0.18);
+        }
+        .feature-card:hover::before, .feature-card:hover::after { opacity: 0.8; }
+        .feature-card h3 { margin: 0 0 0.5rem; font-size: 1.2rem; font-weight: 700; color: #fff; }
+        .feature-card p { margin: 0; color: var(--text-muted); font-size: 0.9rem; line-height: 1.5; }
+
+        @media (max-width: 700px) {
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Light theme */
+        body.light {
+            --bg-color: #faf7f2;
+            --sidebar-bg: #ffffff;
+            --card-bg: rgba(255,255,255,0.75);
+            --text-color: #2a2438;
+            --text-muted: #847f95;
+            --border-color: rgba(30,20,40,0.08);
+        }
+        body.light { background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.05) 1px, transparent 1px); }
+        body.light .card, body.light .feature-card, body.light .topbar-clock, body.light .theme-toggle, body.light .home-btn {
+            box-shadow: 0 10px 30px rgba(80,60,40,0.06);
+        }
+        body.light h1, body.light h3, body.light .mark { color: #2a2438; }
+        body.light .logo .mark { color: #fff; }
+        body.light textarea, body.light input { color: #2a2438; }
+        body.light .mail-item:hover { background: rgba(255,122,89,0.07); }
+
+        /* Custom Dashboard styles */
+        .pipeline-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        
+        .pipeline-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pipeline-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 40px rgba(255, 122, 89, 0.1);
+        }
+        
+        .pipeline-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.03), transparent 50%);
+            pointer-events: none;
+        }
+
+        .card-label {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .card-val-big {
+            font-size: 2.75rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -1px;
+            line-height: 1;
+        }
+
+        .gauge-wrapper {
+            position: relative;
+            width: 65px;
+            height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .circular-chart {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.05);
+            stroke-width: 3.5;
+        }
+
+        .circle {
+            fill: none;
+            stroke-width: 3.5;
+            stroke-linecap: round;
+            transition: stroke-dasharray 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Funnel Stepper styles */
+        .funnel-flow {
+            display: grid;
+            grid-template-columns: 1fr auto 1.2fr auto 1fr;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        @media (max-width: 850px) {
+            .funnel-flow {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            .funnel-connector {
+                transform: rotate(90deg);
+                margin: 0.5rem auto;
+            }
+        }
+
+        .funnel-step {
+            background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005));
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.5rem 1.75rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+        }
+
+        .funnel-step:hover {
+            transform: translateY(-4px);
+            border-color: var(--step-accent, var(--accent));
+            box-shadow: 0 10px 30px rgba(var(--step-accent-rgb, 255, 122, 89), 0.15);
+        }
+
+        .funnel-step::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 4px; height: 100%;
+            background: var(--step-accent, var(--accent));
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .step-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--step-accent, var(--accent));
+            font-weight: 600;
+        }
+
+        .step-badge {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            color: #fff;
+        }
+
+        .step-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .step-val {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .funnel-connector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+
+        .connector-line {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--c-start), var(--c-end));
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+        }
+
+        .connector-pulse {
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+            animation: pulse-flow 2.5s infinite linear;
+        }
+
+        @keyframes pulse-flow {
+            0% { left: -100%; }
+            100% { left: 150%; }
+        }
+
+        /* Filter Pills */
+        .filter-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .filter-pill:hover {
+            color: #fff;
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .filter-pill.active {
+            color: #1a1625;
+            background: #fff;
+            border-color: #fff;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255,255,255,0.25);
+        }
+
+        /* Interactive Detail Item */
+        .interactive-item {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .interactive-item:hover {
+            transform: translateX(4px);
+            background: rgba(255,255,255,0.04);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* Custom Modal / Drawer */
+        .pipeline-modal {
+            position: fixed;
+            top: 0; right: -480px;
+            width: 480px;
+            height: 100vh;
+            background: rgba(21, 19, 31, 0.95);
+            backdrop-filter: blur(24px);
+            border-left: 1px solid var(--border-color);
+            box-shadow: -15px 0 50px rgba(0,0,0,0.5);
+            z-index: 100;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
+        }
+
+        .pipeline-modal.active {
+            right: 0;
+        }
+
+        .pipeline-modal-backdrop {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 99;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .pipeline-modal-backdrop.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem; right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s;
+            box-shadow: none;
+            padding: 0;
+        }
+        .modal-close::after { display: none; }
+        .modal-close:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar">
+    <div class="orb3"></div>
+    <div class="sidebar" style="display: none;">
         <div class="logo">
-            <i data-lucide="bot"></i> Agent Platform
+            <div class="mark">A</div> <span>Agent Platform</span>
+        </div>
+
+        <div class="nav-section-label">Workspace</div>
+
+        <div class="nav-item active" data-view="home-view" onclick="switchView('home-view', this)">
+            <i data-lucide="home"></i> Home
         </div>
         
-        <div class="nav-item active" onclick="switchView('meeting-view', this)">
+        <div class="nav-item" data-view="meeting-view" onclick="switchView('meeting-view', this)">
             <i data-lucide="calendar"></i> Meeting Scheduler
         </div>
         
-        <div class="nav-item" onclick="switchView('job-view', this)">
+        <div class="nav-item" data-view="job-view" onclick="switchView('job-view', this)">
             <i data-lucide="briefcase"></i> Job Application
         </div>
 
-        <div style="margin-top: auto; color: var(--text-muted); font-size: 0.8rem; padding: 1rem;">
-            v2.0 Beta
+        <div class="nav-item" data-view="tracker-view" onclick="switchView('tracker-view', this)">
+            <i data-lucide="table"></i> Application Tracker
         </div>
+
+        <div class="nav-item" data-view="pipeline-view" onclick="switchView('pipeline-view', this); fetchPipelineData();">
+            <i data-lucide="bar-chart-2"></i> Visual Pipeline
+        </div>
+
+        <div class="nav-item" data-view="mail-view" onclick="switchView('mail-view', this); fetchImpMails();">
+            <i data-lucide="mail"></i> Imp Mail
+        </div>
+
+        <div style="margin-top: auto; color: var(--text-muted); font-size: 0.75rem; padding: 1rem; border-top: 1px solid var(--border-color); display:flex; align-items:center; gap:8px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent); animation: pulse 2s infinite;"></span> v2.0 Beta
+        </div>
+        <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}</style>
     </div>
 
     <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-clock">
+                <div id="topbar-date">--</div>
+                <div id="topbar-time">--:--:--</div>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                <i data-lucide="sun" class="icon-sun"></i>
+                <i data-lucide="moon" class="icon-moon"></i>
+            </button>
+        </div>
+
+        <!-- Home View -->
+        <div id="home-view" class="view active" style="max-width: 980px; width: 100%;">
+            <div style="text-align:center; margin-bottom: 2.5rem;">
+                <h1 style="font-size:2.6rem;">Welcome back 👋</h1>
+                <p class="subtitle" style="margin-bottom:0;">Choose a tool below to get started</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card" onclick="openFeature('meeting-view')">
+                    <div class="icon-badge"><i data-lucide="calendar-clock"></i></div>
+                    <h3>Meeting Scheduler</h3>
+                    <p>AI-powered scheduler for Google Meet</p>
+                </div>
+                <div class="feature-card" onclick="openFeature('job-view')">
+                    <div class="icon-badge"><i data-lucide="briefcase"></i></div>
+                    <h3>Job Application</h3>
+                    <p>Bulk personalize and send applications to recruiters</p>
+                </div>
+                <div class="feature-card" onclick="openFeature('tracker-view')">
+                    <div class="icon-badge"><i data-lucide="table-properties"></i></div>
+                    <h3>Application Tracker</h3>
+                    <p>View and manage your sent job applications</p>
+                </div>
+                <div class="feature-card" onclick="openFeature('pipeline-view')">
+                    <div class="icon-badge"><i data-lucide="bar-chart-2"></i></div>
+                    <h3>Visual Pipeline</h3>
+                    <p>Track metrics, response rates, and scheduled interviews</p>
+                </div>
+                <div class="feature-card" onclick="openFeature('mail-view')">
+                    <div class="icon-badge"><i data-lucide="mail"></i></div>
+                    <h3>Important Mail</h3>
+                    <p>Your AI-curated priority inbox</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Meeting View -->
-        <div id="meeting-view" class="view active">
+        <div id="meeting-view" class="view">
             <div class="card">
-                <h1>Meeting Agent</h1>
-                <p class="subtitle">AI-powered scheduler for Google Meet</p>
+                <div class="header-row">
+                    <div class="icon-badge"><i data-lucide="calendar-clock"></i></div>
+                    <div class="header-text">
+                        <h1>Meeting Agent</h1>
+                        <p class="subtitle" style="margin-bottom:0;">AI-powered scheduler for Google Meet</p>
+                    </div>
+                    <button class="home-btn" onclick="openFeature('home-view')" title="Back to Home"><i data-lucide="arrow-left"></i></button>
+                </div>
+                <div style="height:1px; background: var(--border-color); margin: 1.5rem 0 2rem;"></div>
                 
                 <div class="input-group">
                     <textarea id="meeting-prompt" placeholder="e.g., Schedule a 30m sync with john@example.com tomorrow at 10 AM..."></textarea>
@@ -226,8 +1020,15 @@
         <!-- Job View -->
         <div id="job-view" class="view">
             <div class="card">
-                <h1>Job Application Agent</h1>
-                <p class="subtitle">Bulk personalize and send applications to recruiters</p>
+                <div class="header-row">
+                    <div class="icon-badge"><i data-lucide="briefcase"></i></div>
+                    <div class="header-text">
+                        <h1>Job Application Agent</h1>
+                        <p class="subtitle" style="margin-bottom:0;">Bulk personalize and send applications to recruiters</p>
+                    </div>
+                    <button class="home-btn" onclick="openFeature('home-view')" title="Back to Home"><i data-lucide="arrow-left"></i></button>
+                </div>
+                <div style="height:1px; background: var(--border-color); margin: 1.5rem 0 2rem;"></div>
                 
                 <div class="input-group">
                     <label>Input Mode</label>
@@ -283,10 +1084,215 @@
                 </div>
                 
                 <button id="job-btn" onclick="runJobAgent()">Send Applications</button>
-                <button id="job-done-btn" onclick="resetJobUI()" style="display:none; background:#10b981; margin-top:1rem;">Batch Sent! Start New?</button>
+                <div style="display: flex; gap: 10px; margin-top: 1rem;">
+                    <button id="job-done-btn" onclick="resetJobUI()" style="display:none; background:#10b981; margin-top:0;">Batch Sent! Start New?</button>
+                </div>
 
                 <div id="job-status" class="status">Generating and sending emails...</div>
                 <div id="job-response" class="response"></div>
+            </div>
+        </div>
+
+        <!-- Tracker View -->
+        <div id="tracker-view" class="view">
+            <div class="card">
+                <div class="header-row">
+                    <div class="icon-badge"><i data-lucide="table-properties"></i></div>
+                    <div class="header-text">
+                        <h1>Application Tracker</h1>
+                        <p class="subtitle" style="margin-bottom:0;">View and manage your sent job applications</p>
+                    </div>
+                    <button class="home-btn" onclick="openFeature('home-view')" title="Back to Home"><i data-lucide="arrow-left"></i></button>
+                </div>
+                <div style="height:1px; background: var(--border-color); margin: 1.5rem 0 2rem;"></div>
+                
+                <button type="button" onclick="viewTrackerSheet()" style="background:linear-gradient(135deg,#4ecdc4,#ffd166); color:#1a1625; margin-top: 1rem; margin-bottom: 1rem;">Open Google Sheet Tracker</button>
+                
+                <button type="button" id="sync-btn" onclick="runSyncFollowup()">Sync & Auto Follow-up</button>
+                
+                <div id="sync-status" class="status">Syncing & processing recruiter follow-ups...</div>
+                <div id="sync-response" class="response" style="display:none; background: rgba(255,255,255,0.03); padding: 1.5rem; border: 1px solid var(--border-color); border-radius:10px; margin-top: 1.5rem; text-align: left; font-family: monospace;"></div>
+            </div>
+        </div>
+
+        <!-- Pipeline View -->
+        <div id="pipeline-view" class="view" style="max-width: 1050px; width: 100%;">
+            <div class="card" style="padding: 2.5rem; margin-bottom: 2rem; border-radius: 20px;">
+                <div class="header-row">
+                    <div class="icon-badge"><i data-lucide="bar-chart-2"></i></div>
+                    <div class="header-text">
+                        <h1 style="background: linear-gradient(135deg, #fff, var(--text-muted)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Visual Pipeline & Analytics</h1>
+                        <p class="subtitle" style="margin-bottom:0;">Monitor job application conversion metrics and scheduled interviews</p>
+                    </div>
+                    <button class="home-btn" onclick="openFeature('home-view')" title="Back to Home"><i data-lucide="arrow-left"></i></button>
+                </div>
+                <div style="height:1px; background: var(--border-color); margin: 1.5rem 0 2rem;"></div>
+
+                <!-- Metrics Grid -->
+                <div class="pipeline-grid">
+                    <!-- Metric 1: Outbound Sent -->
+                    <div class="pipeline-card">
+                        <div style="text-align: left;">
+                            <span class="card-label">Outbound Sent</span>
+                            <div id="metric-sent" class="card-val-big">0</div>
+                        </div>
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(255,122,89,0.1); border: 1px solid rgba(255,122,89,0.2); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                            <i data-lucide="send" style="width:20px; height:20px;"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Metric 2: Response Rate with Circular SVG Gauge -->
+                    <div class="pipeline-card">
+                        <div style="text-align: left;">
+                            <span class="card-label">Response Rate</span>
+                            <div id="metric-rate" class="card-val-big" style="color: var(--accent-2);">0%</div>
+                        </div>
+                        <div class="gauge-wrapper">
+                            <svg width="60" height="60" viewBox="0 0 36 36" class="circular-chart">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path id="gauge-circle-rate" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="var(--accent-2)" style="filter: drop-shadow(0 0 4px var(--accent-2));"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Metric 3: Interviews Scheduled with Circular SVG Gauge -->
+                    <div class="pipeline-card">
+                        <div style="text-align: left;">
+                            <span class="card-label">Interviews Booked</span>
+                            <div id="metric-interviews" class="card-val-big" style="color: var(--accent-3);">0</div>
+                        </div>
+                        <div class="gauge-wrapper">
+                            <svg width="60" height="60" viewBox="0 0 36 36" class="circular-chart">
+                                <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                                <path id="gauge-circle-interviews" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="var(--accent-3)" style="filter: drop-shadow(0 0 4px var(--accent-3));"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3D Chevron Funnel Stepper Flow -->
+                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem; margin-bottom: 2.5rem;">
+                    <h3 style="margin-top: 0; margin-bottom: 1.75rem; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 10px; font-weight: 600;"><i data-lucide="split" style="width:20px; height:20px; color:var(--accent);"></i> Conversion Pipeline Funnel</h3>
+                    
+                    <div class="funnel-flow">
+                        <!-- Step 1: Outbound Sent -->
+                        <div class="funnel-step" style="--step-accent: var(--accent); --step-accent-rgb: 255,122,89;">
+                            <div class="step-header">
+                                <span class="step-num">STAGE 01</span>
+                                <span class="step-badge">Outbound</span>
+                            </div>
+                            <div class="step-label">Applications Sent</div>
+                            <div id="funnel-sent-val" class="step-val">0</div>
+                        </div>
+
+                        <!-- Connector 1 -->
+                        <div class="funnel-connector" style="--c-start: var(--accent); --c-end: var(--accent-2);">
+                            <div class="connector-line">
+                                <div class="connector-pulse"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Recruiter Replies -->
+                        <div class="funnel-step" style="--step-accent: var(--accent-2); --step-accent-rgb: 255,209,102;">
+                            <div class="step-header">
+                                <span class="step-num">STAGE 02</span>
+                                <span id="funnel-replies-pct" class="step-badge">0%</span>
+                            </div>
+                            <div class="step-label">Recruiter Replies</div>
+                            <div id="funnel-replies-val" class="step-val" style="color: var(--accent-2);">0</div>
+                        </div>
+
+                        <!-- Connector 2 -->
+                        <div class="funnel-connector" style="--c-start: var(--accent-2); --c-end: var(--accent-3);">
+                            <div class="connector-line">
+                                <div class="connector-pulse"></div>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Interviews Booked -->
+                        <div class="funnel-step" style="--step-accent: var(--accent-3); --step-accent-rgb: 78,205,196;">
+                            <div class="step-header">
+                                <span class="step-num">STAGE 03</span>
+                                <span id="funnel-interviews-pct" class="step-badge">0%</span>
+                            </div>
+                            <div class="step-label">Interviews Booked</div>
+                            <div id="funnel-interviews-val" class="step-val" style="color: var(--accent-3);">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two-Column Details Section -->
+                <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 2rem;">
+                    <!-- Recruiter Replies & Sentiment Filters -->
+                    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem; display: flex; flex-direction: column;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; flex-wrap:wrap; gap:10px;">
+                            <h3 style="margin: 0; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; font-weight: 600;"><i data-lucide="mail-check" style="width:20px; height:20px; color:var(--accent-2);"></i> Recruiter Responses</h3>
+                            
+                            <!-- Sentiment Quick counts -->
+                            <div style="display:flex; gap:12px; font-size:0.75rem;">
+                                <span style="display:flex; align-items:center; gap:4px; color:var(--text-muted);"><span style="width:6px; height:6px; border-radius:50%; background:#3b82f6;"></span> Warm (<strong id="sentiment-positive">0</strong>)</span>
+                                <span style="display:flex; align-items:center; gap:4px; color:var(--text-muted);"><span style="width:6px; height:6px; border-radius:50%; background:#94a3b8;"></span> Neutral (<strong id="sentiment-neutral">0</strong>)</span>
+                                <span style="display:flex; align-items:center; gap:4px; color:var(--text-muted);"><span style="width:6px; height:6px; border-radius:50%; background:#ef4444;"></span> Rejection (<strong id="sentiment-rejection">0</strong>)</span>
+                            </div>
+                        </div>
+
+                        <!-- Filter Pills -->
+                        <div class="filter-container">
+                            <div class="filter-pill active" onclick="filterResponses('all', this)">All Responses</div>
+                            <div class="filter-pill" onclick="filterResponses('Warm/Positive', this)" style="border-left: 3px solid #3b82f6;">Warm</div>
+                            <div class="filter-pill" onclick="filterResponses('Neutral/General', this)" style="border-left: 3px solid #94a3b8;">Neutral</div>
+                            <div class="filter-pill" onclick="filterResponses('Rejection', this)" style="border-left: 3px solid #ef4444;">Rejections</div>
+                        </div>
+
+                        <!-- List of responses -->
+                        <div id="pipeline-replies-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; padding-right: 8px;">
+                            <em style="color: var(--text-muted); font-size: 0.9rem;">No recruiter replies tracked yet.</em>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Interviews -->
+                    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-color); border-radius: 20px; padding: 2rem; display: flex; flex-direction: column;">
+                        <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: #fff; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; font-weight: 600;"><i data-lucide="video" style="width:20px; height:20px; color:var(--accent-3);"></i> Upcoming Interviews</h3>
+                        
+                        <div id="pipeline-interviews-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 380px; overflow-y: auto; padding-right: 8px;">
+                            <em style="color: var(--text-muted); font-size: 0.9rem;">No upcoming interviews found in your calendar.</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mail View -->
+        <div id="mail-view" class="view" style="max-width: 100%; height: 100%; flex-direction: column; background: transparent;">
+            <div style="padding: 1rem 2rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button class="home-btn" onclick="openFeature('home-view')" title="Back to Home"><i data-lucide="arrow-left"></i></button>
+                    <h1 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Important Mail</h1>
+                </div>
+                <button onclick="fetchImpMails()" style="width: auto; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 8px; box-shadow: none; border: 1px solid var(--border-color); background: rgba(255,255,255,0.04); color: white;">
+                    <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Refresh
+                </button>
+            </div>
+            
+            <div id="mail-loading" class="status" style="display:block; text-align:center; border: none; background: transparent;">
+                Syncing emails... <div class="spinner" style="border-color:#fff; border-top-color:transparent;"></div>
+            </div>
+            
+            <div id="mail-list-container" class="mail-list" style="display: none;">
+                <!-- Emails will be populated here -->
+            </div>
+
+            <!-- Mail Detail Container -->
+            <div id="mail-detail-container" style="display: none; flex: 1; flex-direction: column; background: rgba(255,255,255,0.02); padding: 2rem; overflow-y: auto;">
+                <button type="button" onclick="backToMailList()" style="width: auto; align-self: flex-start; padding: 0.5rem 1rem; margin-bottom: 1.5rem; background: rgba(255,255,255,0.06); color: white; border: 1px solid var(--border-color); cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow:none;">
+                    <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Inbox
+                </button>
+                <h2 id="mail-detail-subject" style="margin-top: 0; font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; color: #fff; font-weight: 600;"></h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <div style="font-weight: 600; color: #fff;" id="mail-detail-from"></div>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;" id="mail-detail-date"></div>
+                </div>
+                <iframe id="mail-detail-body-iframe" style="flex: 1; border: none; background: white; width: 100%; min-height: 500px; border-radius: 4px;"></iframe>
             </div>
         </div>
     </div>
@@ -299,8 +1305,63 @@
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
             document.getElementById(viewId).classList.add('active');
-            element.classList.add('active');
+            if (element) element.classList.add('active');
+            
+            const sidebar = document.querySelector('.sidebar');
+            if (viewId === 'home-view') {
+                sidebar.style.display = 'none';
+            } else {
+                sidebar.style.display = 'flex';
+            }
+
+            const mainContent = document.querySelector('.main-content');
+            if (viewId === 'mail-view') {
+                mainContent.style.alignItems = 'stretch';
+                mainContent.style.padding = '0';
+                backToMailList(); // Ensure list is shown
+            } else {
+                mainContent.style.alignItems = 'center';
+                mainContent.style.padding = '3rem';
+            }
+
+            if (viewId === 'pipeline-view') {
+                fetchPipelineData();
+            }
         }
+
+        function openFeature(viewId) {
+            const nav = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+            switchView(viewId, nav);
+            if (viewId === 'mail-view') fetchImpMails();
+            lucide.createIcons();
+        }
+
+        // Live date & time
+        function updateClock() {
+            const now = new Date();
+            const dateEl = document.getElementById('topbar-date');
+            const timeEl = document.getElementById('topbar-time');
+            if (dateEl) dateEl.textContent = now.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+            if (timeEl) timeEl.textContent = now.toLocaleTimeString();
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Theme toggle
+        function applyTheme(theme) {
+            document.body.classList.toggle('light', theme === 'light');
+        }
+        function toggleTheme() {
+            const isLight = document.body.classList.contains('light');
+            const next = isLight ? 'dark' : 'light';
+            applyTheme(next);
+            try { localStorage.setItem('theme', next); } catch (e) {}
+        }
+        (function initTheme() {
+            let saved = 'dark';
+            try { saved = localStorage.getItem('theme') || 'dark'; } catch (e) {}
+            applyTheme(saved);
+        })();
 
         // Meeting Agent Logic
         async function runMeetingAgent() {
@@ -322,6 +1383,32 @@
                     body: JSON.stringify({ prompt })
                 });
                 const data = await res.json();
+                
+                if (data.conflict) {
+                    window.originalMeetingParams = data.original_params;
+                    let html = `<div style="margin-top:1.5rem; text-align:left;">`;
+                    html += `<p style="color:#ffd166; font-weight:600; margin-bottom:1rem;">⚠️ ${data.message}</p>`;
+                    html += `<div style="display:flex; flex-direction:column; gap:10px; max-height:250px; overflow-y:auto; padding-right:10px; margin-bottom:1.5rem;">`;
+                    
+                    data.slots.forEach((slot, idx) => {
+                        html += `
+                            <label style="display:flex; align-items:center; gap:12px; padding:12px 16px; background:rgba(255,255,255,0.04); border:1px solid var(--border-color); border-radius:8px; cursor:pointer; transition:all 0.2s ease;" class="slot-option">
+                                <input type="checkbox" class="selected-slot-checkbox" value="${slot.start}" onclick="selectOnlyThisCheckbox(this)" style="width:18px; height:18px; accent-color:var(--accent);">
+                                <span style="font-size:0.95rem; color:#fff;">${slot.label}</span>
+                            </label>
+                        `;
+                    });
+                    
+                    html += `</div>`;
+                    html += `<button id="confirm-slot-btn" onclick="confirmSelectedSlot()" style="background:linear-gradient(135deg,#ff7a59,#ff9e79); width:100%;">Confirm Selected Slot & Send</button>`;
+                    html += `</div>`;
+                    responseDiv.innerHTML = html;
+                    btn.style.display = 'none';
+                    btn.disabled = false;
+                    btn.innerHTML = 'Schedule Meeting';
+                    return;
+                }
+
                 responseDiv.innerHTML = data.error ? "Error: " + data.error : data.response.replace(/\n/g, '<br>');
                 if(!data.error) {
                     btn.style.display = 'none';
@@ -330,6 +1417,50 @@
             } catch (e) { responseDiv.innerHTML = "Error connecting to server"; }
             btn.disabled = false;
             btn.innerHTML = 'Schedule Meeting';
+        }
+
+        function selectOnlyThisCheckbox(checkbox) {
+            const checkboxes = document.querySelectorAll('.selected-slot-checkbox');
+            checkboxes.forEach((item) => {
+                if (item !== checkbox) item.checked = false;
+            });
+        }
+
+        async function confirmSelectedSlot() {
+            const checked = document.querySelector('.selected-slot-checkbox:checked');
+            if (!checked) return alert("Please select a slot");
+            
+            const start_time = checked.value;
+            const params = window.originalMeetingParams;
+            if (!params) return alert("Params missing, please try again");
+            
+            const btn = document.getElementById('confirm-slot-btn');
+            const responseDiv = document.getElementById('meeting-response');
+            
+            btn.disabled = true;
+            btn.innerHTML = 'Booking Slot... <div class="spinner"></div>';
+            
+            try {
+                const res = await fetch('/api/confirm-schedule', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        summary: params.summary,
+                        start_time: start_time,
+                        duration_minutes: params.duration_minutes,
+                        attendee_email: params.attendee_email,
+                        description: params.description,
+                        reschedule_event_id: params.reschedule_event_id
+                    })
+                });
+                const data = await res.json();
+                responseDiv.innerHTML = data.error ? "Error: " + data.error : data.response.replace(/\n/g, '<br>');
+                if (!data.error) {
+                    document.getElementById('meeting-done-btn').style.display = 'block';
+                }
+            } catch (e) {
+                responseDiv.innerHTML = "Error connecting to server";
+            }
         }
 
         function resetMeetingUI() {
@@ -419,6 +1550,516 @@
             document.getElementById('manual-input-group').style.display = mode === 'manual' ? 'block' : 'none';
             document.getElementById('csv-input-group').style.display = mode === 'csv' ? 'block' : 'none';
         }
+
+        async function viewTrackerSheet() {
+            try {
+                const res = await fetch('/api/tracker-url');
+                const data = await res.json();
+                if (data.url) {
+                    window.open(data.url, '_blank');
+                } else {
+                    alert("Error: " + (data.error || "Could not find tracker URL."));
+                }
+            } catch (e) {
+                alert("Error connecting to server. Is the backend running?");
+            }
+        }
+
+        async function runSyncFollowup() {
+            const btn = document.getElementById('sync-btn');
+            const status = document.getElementById('sync-status');
+            const responseDiv = document.getElementById('sync-response');
+
+            btn.disabled = true;
+            btn.innerHTML = 'Syncing... <div class="spinner"></div>';
+            status.style.display = 'block';
+            responseDiv.style.display = 'none';
+            responseDiv.innerHTML = '';
+
+            try {
+                const res = await fetch('/api/sync-followup', {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                
+                if (data.error) {
+                    responseDiv.innerHTML = `<span style="color: #ef4444;">Error: ${data.error}</span>`;
+                } else {
+                    let html = `<strong style="color: #10b981;">${data.message}</strong><br><br>`;
+                    if (data.actions && data.actions.length > 0) {
+                        html += "<strong>Actions Taken:</strong><ul style='margin-top: 5px; padding-left: 20px; color: #fff;'>";
+                        data.actions.forEach(action => {
+                            html += `<li style="margin-bottom: 5px;">${action}</li>`;
+                        });
+                        html += "</ul>";
+                    } else {
+                        html += "<em style='color: #888;'>No follow-ups needed and no new recruiter responses found. All applications are up to date!</em>";
+                    }
+                    responseDiv.innerHTML = html;
+                }
+                responseDiv.style.display = 'block';
+            } catch (e) {
+                responseDiv.innerHTML = '<span style="color: #ef4444;">Error connecting to server</span>';
+                responseDiv.style.display = 'block';
+            }
+            btn.disabled = false;
+            btn.innerHTML = 'Sync & Auto Follow-up';
+            status.style.display = 'none';
+        }
+
+        async function fetchImpMails() {
+            const loading = document.getElementById('mail-loading');
+            const container = document.getElementById('mail-list-container');
+            
+            loading.style.display = 'block';
+            container.style.display = 'none';
+            container.innerHTML = '';
+            
+            try {
+                const res = await fetch('/api/imp-mails');
+                const data = await res.json();
+                
+                if (data.error) {
+                    loading.innerHTML = 'Error fetching emails: ' + data.error;
+                    return;
+                }
+                
+                if (!data.emails || data.emails.length === 0) {
+                    loading.innerHTML = 'No important emails found right now.';
+                    return;
+                }
+                
+                data.emails.forEach(email => {
+                    const el = document.createElement('div');
+                    el.className = 'mail-item';
+                    if (email.unread) {
+                        el.classList.add('unread');
+                    }
+                    
+                    // Format sender (extract just name if possible)
+                    let sender = email.from;
+                    const match = sender.match(/^(.*?) <.*?>$/);
+                    if (match) sender = match[1].replace(/"/g, '');
+                    
+                    // Format Date
+                    let dateStr = email.date;
+                    try {
+                        const d = new Date(email.date);
+                        dateStr = d.toLocaleDateString(undefined, {month: 'short', day: 'numeric'});
+                    } catch(e) {}
+                    
+                    let badge = '';
+                    if (email.sentiment) {
+                        const pulseClass = email.sentiment.animate ? 'animate-pulse' : '';
+                        badge = `<span class="mail-badge ${pulseClass}" style="
+                            display: inline-block;
+                            padding: 2px 8px;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                            border-radius: 4px;
+                            color: ${email.sentiment.color};
+                            background: ${email.sentiment.bg};
+                            border: 1px solid ${email.sentiment.border};
+                            margin-right: 8px;
+                            vertical-align: middle;
+                        ">${email.sentiment.label}</span>`;
+                    }
+                    
+                    el.innerHTML = `
+                        <div class="mail-sender">${sender}</div>
+                        <div class="mail-subject">
+                            ${badge}${email.subject} <span class="mail-snippet">- ${email.snippet}</span>
+                        </div>
+                        <div class="mail-date">${dateStr}</div>
+                    `;
+                    el.onclick = () => {
+                        openMailDetail(email.id);
+                    };
+                    container.appendChild(el);
+                });
+                
+                loading.style.display = 'none';
+                container.style.display = 'block';
+            } catch (e) {
+                loading.innerHTML = 'Error syncing emails from server.';
+            }
+        }
+
+        async function openMailDetail(mailId) {
+            const listContainer = document.getElementById('mail-list-container');
+            const detailContainer = document.getElementById('mail-detail-container');
+            const loading = document.getElementById('mail-loading');
+            
+            listContainer.style.display = 'none';
+            detailContainer.style.display = 'none';
+            loading.style.display = 'block';
+            loading.innerHTML = 'Opening email... <div class="spinner" style="border-color:#fff; border-top-color:transparent;"></div>';
+            
+            try {
+                const res = await fetch(`/api/mail-detail/${mailId}`);
+                const data = await res.json();
+                
+                if (data.error) {
+                    loading.innerHTML = 'Error opening email: ' + data.error;
+                    return;
+                }
+                
+                document.getElementById('mail-detail-subject').innerText = data.subject;
+                document.getElementById('mail-detail-from').innerText = data.from;
+                
+                let dateStr = data.date;
+                try {
+                    const d = new Date(data.date);
+                    dateStr = d.toLocaleString();
+                } catch(e) {}
+                document.getElementById('mail-detail-date').innerText = dateStr;
+                
+                const iframe = document.getElementById('mail-detail-body-iframe');
+                iframe.srcdoc = data.body || '<p style="font-family: sans-serif; color: #555; padding: 20px;">No content available</p>';
+                
+                loading.style.display = 'none';
+                detailContainer.style.display = 'flex';
+                
+                lucide.createIcons();
+            } catch (e) {
+                loading.innerHTML = 'Error syncing email details from server.';
+            }
+        }
+        
+        function backToMailList() {
+            document.getElementById('mail-list-container').style.display = 'block';
+            document.getElementById('mail-detail-container').style.display = 'none';
+            document.getElementById('mail-loading').style.display = 'none';
+            fetchImpMails(); // Automatically refresh list to update read/unread status
+        }
+
+        let pipelineDataCache = null;
+        let activeFilter = 'all';
+
+        async function fetchPipelineData() {
+            const sentEl = document.getElementById('metric-sent');
+            const rateEl = document.getElementById('metric-rate');
+            const interviewsEl = document.getElementById('metric-interviews');
+            
+            const fSentVal = document.getElementById('funnel-sent-val');
+            const fRepliesVal = document.getElementById('funnel-replies-val');
+            const fInterviewsVal = document.getElementById('funnel-interviews-val');
+            const fRepliesPct = document.getElementById('funnel-replies-pct');
+            const fInterviewsPct = document.getElementById('funnel-interviews-pct');
+            
+            const sPositive = document.getElementById('sentiment-positive');
+            const sNeutral = document.getElementById('sentiment-neutral');
+            const sRejection = document.getElementById('sentiment-rejection');
+            
+            const interviewsList = document.getElementById('pipeline-interviews-list');
+            const repliesList = document.getElementById('pipeline-replies-list');
+            
+            // Set loading state
+            sentEl.textContent = '...';
+            rateEl.textContent = '...';
+            interviewsEl.textContent = '...';
+            
+            try {
+                const res = await fetch('/api/pipeline-data');
+                const data = await res.json();
+                
+                if (data.error) {
+                    alert("Error loading pipeline data: " + data.error);
+                    return;
+                }
+                
+                pipelineDataCache = data;
+                
+                // Count animations
+                animateNumber(sentEl, 0, data.outbound_sent, 800);
+                animateNumber(rateEl, 0, Math.round(data.response_rate), 800, '%');
+                animateNumber(interviewsEl, 0, data.interviews_count, 800);
+                
+                animateNumber(fSentVal, 0, data.outbound_sent, 800);
+                animateNumber(fRepliesVal, 0, data.response_count, 800);
+                animateNumber(fInterviewsVal, 0, data.interviews_count, 800);
+                
+                // Funnel percentages
+                const repliesPct = data.outbound_sent > 0 ? Math.round(data.response_count / data.outbound_sent * 100) : 0;
+                const interviewsPct = data.outbound_sent > 0 ? Math.round(data.interviews_count / data.outbound_sent * 100) : 0;
+                
+                fRepliesPct.textContent = repliesPct + '%';
+                fInterviewsPct.textContent = interviewsPct + '%';
+                
+                // Set SVG Gauges
+                const circleRate = document.getElementById('gauge-circle-rate');
+                const circleInterviews = document.getElementById('gauge-circle-interviews');
+                
+                circleRate.setAttribute('stroke-dasharray', `${Math.min(100, Math.max(0, repliesPct))}, 100`);
+                circleInterviews.setAttribute('stroke-dasharray', `${Math.min(100, Math.max(0, interviewsPct))}, 100`);
+                
+                // Sentiment breakdown
+                sPositive.textContent = data.sentiment_breakdown["Warm/Positive"];
+                sNeutral.textContent = data.sentiment_breakdown["Neutral/General"];
+                sRejection.textContent = data.sentiment_breakdown["Rejection"];
+                
+                // Render upcoming interviews
+                renderInterviewsList(data.interviews);
+                
+                // Render recruiter replies
+                renderRepliesList();
+                
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+                alert("Error connecting to server. Is the backend running?");
+            }
+        }
+
+        function animateNumber(element, start, end, duration, suffix = '') {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.textContent = Math.floor(progress * (end - start) + start) + suffix;
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    element.textContent = end + suffix;
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function filterResponses(category, element) {
+            activeFilter = category;
+            
+            // Toggle active pill styling
+            document.querySelectorAll('.filter-pill').forEach(pill => pill.classList.remove('active'));
+            element.classList.add('active');
+            
+            renderRepliesList();
+        }
+
+        function getSentimentCategory(label) {
+            if (["Positive Follow-up", "Offer Stage"].includes(label)) {
+                return "Warm/Positive";
+            } else if (label === "Rejection") {
+                return "Rejection";
+            } else {
+                return "Neutral/General";
+            }
+        }
+
+        function renderRepliesList() {
+            const repliesList = document.getElementById('pipeline-replies-list');
+            repliesList.innerHTML = '';
+            
+            if (!pipelineDataCache || !pipelineDataCache.applications) return;
+            
+            const replies = pipelineDataCache.applications.filter(app => {
+                const st = app.status.toLowerCase();
+                if (!(st === 'replied' || st === 'replied & answered' || st === 'priority check' || st === 'interview scheduled' || st === 'interview proposed')) return false;
+                
+                if (activeFilter === 'all') return true;
+                const category = app.sentiment ? getSentimentCategory(app.sentiment.label) : 'Neutral/General';
+                return category === activeFilter;
+            });
+            
+            if (replies.length > 0) {
+                replies.forEach(app => {
+                    let badge = '';
+                    if (app.sentiment) {
+                        const pulseClass = app.sentiment.animate ? 'animate-pulse' : '';
+                        badge = `<span class="${pulseClass}" style="
+                            display: inline-block;
+                            padding: 2px 8px;
+                            font-size: 0.7rem;
+                            font-weight: 600;
+                            border-radius: 4px;
+                            color: ${app.sentiment.color};
+                            background: ${app.sentiment.bg};
+                            border: 1px solid ${app.sentiment.border};
+                        ">${app.sentiment.label}</span>`;
+                    }
+
+                    const item = document.createElement('div');
+                    item.className = 'interactive-item';
+                    item.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 4px; max-width: 60%;">
+                            <strong style="color: #fff; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${app.email}</strong>
+                            <span style="color: var(--text-muted); font-size: 0.8rem;">${app.position}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            ${badge}
+                            <i data-lucide="chevron-right" style="width:16px; height:16px; color:var(--text-muted);"></i>
+                        </div>
+                    `;
+                    item.onclick = () => openReplyModal(app);
+                    repliesList.appendChild(item);
+                });
+            } else {
+                repliesList.innerHTML = `<em style="color: var(--text-muted); font-size: 0.9rem;">No recruiter replies match the selected filter.</em>`;
+            }
+            lucide.createIcons();
+        }
+
+        function renderInterviewsList(interviews) {
+            const interviewsList = document.getElementById('pipeline-interviews-list');
+            interviewsList.innerHTML = '';
+            
+            if (interviews && interviews.length > 0) {
+                interviews.forEach(evt => {
+                    let dateStr = evt.start;
+                    try {
+                        const d = new Date(evt.start);
+                        dateStr = d.toLocaleString(undefined, {weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
+                    } catch(e) {}
+                    
+                    const meetBadge = evt.meetLink ? `
+                        <span style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; color:var(--accent-3); font-weight:600;">
+                            <i data-lucide="video" style="width: 12px; height: 12px;"></i> Meet
+                        </span>
+                    ` : '';
+
+                    const item = document.createElement('div');
+                    item.className = 'interactive-item';
+                    item.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 4px; max-width: 75%;">
+                            <strong style="color: #fff; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${evt.summary}</strong>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;">${dateStr}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            ${meetBadge}
+                            <i data-lucide="chevron-right" style="width:16px; height:16px; color:var(--text-muted);"></i>
+                        </div>
+                    `;
+                    item.onclick = () => openInterviewModal(evt);
+                    interviewsList.appendChild(item);
+                });
+            } else {
+                interviewsList.innerHTML = '<em style="color: var(--text-muted); font-size: 0.9rem;">No upcoming interviews found.</em>';
+            }
+            lucide.createIcons();
+        }
+
+        function openReplyModal(app) {
+            const contentEl = document.getElementById('pipeline-modal-content');
+            
+            let badge = '';
+            if (app.sentiment) {
+                badge = `<span style="
+                    display: inline-block;
+                    padding: 4px 10px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    border-radius: 6px;
+                    color: ${app.sentiment.color};
+                    background: ${app.sentiment.bg};
+                    border: 1px solid ${app.sentiment.border};
+                    margin-top: 4px;
+                ">${app.sentiment.label}</span>`;
+            }
+
+            const cleanBody = app.reply_body ? app.reply_body.replace(/\r?\n/g, '<br>') : '<em>No message snippet recorded.</em>';
+            const subject = app.reply_subject || 'Re: Job Application';
+
+            contentEl.innerHTML = `
+                <div>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:var(--accent);">RECRUITER RESPONSE</span>
+                    <h2 style="margin: 6px 0; color:#fff; font-size:1.4rem; font-weight:600; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">${subject}</h2>
+                    <div style="color:var(--text-muted); font-size:0.85rem;">From: <strong style="color:#fff;">${app.email}</strong></div>
+                    <div style="color:var(--text-muted); font-size:0.85rem; margin-top: 2px;">Role: <strong style="color:#fff;">${app.position}</strong></div>
+                    <div style="margin-top: 10px;">${badge}</div>
+                </div>
+                <div style="height:1px; background:var(--border-color);"></div>
+                <div style="flex:1; display:flex; flex-direction:column;">
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; margin-bottom: 8px;">Recruiter Mail Message</div>
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.25rem; font-size:0.9rem; line-height:1.6; color:#fff; max-height: 400px; overflow-y:auto; font-family:sans-serif;">
+                        ${cleanBody}
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <a href="mailto:${app.email}" style="flex:1; text-align:center; background:linear-gradient(135deg, var(--accent), var(--accent-2)); color:#1a1625; padding: 0.75rem; border-radius: 8px; font-weight:700; text-decoration:none; font-size:0.9rem; box-shadow: 0 4px 12px rgba(255,122,89,0.25);">
+                        Direct Reply
+                    </a>
+                </div>
+            `;
+            
+            document.getElementById('pipeline-modal-backdrop').classList.add('active');
+            document.getElementById('pipeline-modal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        function openInterviewModal(evt) {
+            const contentEl = document.getElementById('pipeline-modal-content');
+            
+            let dateStr = evt.start;
+            let timeStr = '';
+            try {
+                const startD = new Date(evt.start);
+                const endD = new Date(evt.end);
+                dateStr = startD.toLocaleDateString(undefined, {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
+                timeStr = startD.toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'}) + ' - ' + endD.toLocaleTimeString(undefined, {hour: '2-digit', minute:'2-digit'});
+            } catch(e) {}
+
+            let meetText = 'Join Video Call';
+            if (evt.meetLink) {
+                if (evt.meetLink.includes('meet.google.com')) {
+                    meetText = 'Join Google Meet Video Call';
+                } else if (evt.meetLink.includes('zoom.us')) {
+                    meetText = 'Join Zoom Video Call';
+                } else if (evt.meetLink.includes('teams.microsoft.com')) {
+                    meetText = 'Join Microsoft Teams Call';
+                }
+            }
+
+            const meetBtn = evt.meetLink ? `
+                <a href="${evt.meetLink}" target="_blank" style="display:flex; align-items:center; justify-content:center; gap:8px; background:linear-gradient(135deg, var(--accent-3), #3b82f6); color:#1a1625; padding: 0.85rem; border-radius: 8px; font-weight:700; text-decoration:none; font-size:0.95rem; box-shadow: 0 4px 15px rgba(78,205,196,0.3); margin-top: auto;">
+                    <i data-lucide="video" style="width:18px; height:18px;"></i> ${meetText}
+                </a>
+            ` : '';
+
+            const description = evt.description ? evt.description.replace(/\n/g, '<br>') : '<em>No interview description details provided.</em>';
+
+            contentEl.innerHTML = `
+                <div>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:var(--accent-3);">CALENDAR EVENT</span>
+                    <h2 style="margin: 6px 0; color:#fff; font-size:1.4rem; font-weight:600;">${evt.summary}</h2>
+                    <div style="display:flex; flex-direction:column; gap:6px; margin-top:12px; background:rgba(255,255,255,0.015); border:1px solid var(--border-color); border-radius:10px; padding:12px;">
+                        <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem; color:var(--text-color);">
+                            <i data-lucide="calendar" style="width:16px; height:16px; color:var(--accent-3);"></i>
+                            <span>${dateStr}</span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px; font-size:0.85rem; color:var(--text-color);">
+                            <i data-lucide="clock" style="width:16px; height:16px; color:var(--accent-3);"></i>
+                            <span>${timeStr}</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="height:1px; background:var(--border-color);"></div>
+                <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">Event Details</div>
+                    <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border-color); border-radius:12px; padding:1.25rem; font-size:0.9rem; line-height:1.6; color:#fff; flex:1; overflow-y:auto;">
+                        ${description}
+                    </div>
+                </div>
+                ${meetBtn}
+            `;
+            
+            document.getElementById('pipeline-modal-backdrop').classList.add('active');
+            document.getElementById('pipeline-modal').classList.add('active');
+            lucide.createIcons();
+        }
+
+        function closePipelineModal() {
+            document.getElementById('pipeline-modal-backdrop').classList.remove('active');
+            document.getElementById('pipeline-modal').classList.remove('active');
+        }
     </script>
+    
+    <!-- Pipeline Detail Drawer Modal -->
+    <div id="pipeline-modal-backdrop" class="pipeline-modal-backdrop" onclick="closePipelineModal()"></div>
+    <div id="pipeline-modal" class="pipeline-modal">
+        <button class="modal-close" onclick="closePipelineModal()"><i data-lucide="x"></i></button>
+        <div id="pipeline-modal-content" style="display:flex; flex-direction:column; height:100%; gap:1.5rem; overflow-y:auto; padding-top: 1rem;">
+            <!-- Modal content dynamically loaded here -->
+        </div>
+    </div>
 </body>
 </html>

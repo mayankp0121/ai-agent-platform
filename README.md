@@ -36,9 +36,18 @@ A professional-grade AI platform built with OpenAI GPT-4o and Google APIs. It fe
    ```
 
 3. Setup Environment Variables:
-   Create a `.env` file:
+   Create a `.env` file with either OpenAI or Groq configuration:
+   
+   **For Groq (Default):**
    ```env
-   OPENAI_API_KEY=your_openai_key
+   GROQ_API_KEY=your_groq_api_key
+   GROQ_API_BASE=https://api.groq.com/openai/v1
+   GROQ_MODEL_NAME=openai/gpt-oss-120b
+   ```
+
+   **For OpenAI:**
+   ```env
+   OPENAI_API_KEY=your_openai_api_key
    ```
 
 4. Setup Google Credentials:
