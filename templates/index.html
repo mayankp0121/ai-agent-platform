@@ -211,7 +211,7 @@
         /* Main Content Styles */
         .main-content {
             flex: 1;
-            padding: 3rem;
+            padding: 5.5rem 3rem 3rem;
             overflow-y: auto;
             display: flex;
             align-items: center;
@@ -511,12 +511,47 @@
             cursor: pointer;
             box-shadow: none;
             padding: 0;
+            transition: all 0.2s ease;
+        }
+        .theme-toggle:hover {
+            border-color: var(--accent);
+            transform: scale(1.05);
         }
         .theme-toggle::after { display: none; }
-        .theme-toggle i { width: 18px; height: 18px; color: var(--accent-2); }
+        .theme-toggle i, .theme-toggle svg { width: 18px; height: 18px; color: var(--accent-2); }
         .theme-toggle .icon-moon { display: none; }
         body.light .theme-toggle .icon-sun { display: none; }
         body.light .theme-toggle .icon-moon { display: block; }
+        body.light .theme-toggle i, body.light .theme-toggle svg { color: var(--text-color); }
+
+        /* Suggestion chips styling */
+        .suggestion-chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 0.5rem 1rem;
+            font-size: 0.82rem;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            pointer-events: auto;
+            text-align: left;
+        }
+        .suggestion-chip:hover {
+            background: rgba(255, 122, 89, 0.08);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        body.light .suggestion-chip {
+            background: rgba(0, 0, 0, 0.02);
+            color: var(--text-color);
+        }
+        body.light .suggestion-chip:hover {
+            background: rgba(255, 122, 89, 0.05);
+        }
 
         /* Home button */
         .home-btn {
@@ -534,6 +569,45 @@
         .home-btn::after { display: none; }
         .home-btn i { width: 18px; height: 18px; }
         .home-btn:hover { color: var(--accent-2); border-color: var(--accent-2); transform: none; box-shadow: none; }
+
+        /* Logout and Download profile button styles */
+        #logout-btn, #download-profile-btn {
+            pointer-events: auto;
+            width: 42px !important;
+            height: 42px !important;
+            border-radius: 50% !important;
+            background: var(--card-bg) !important;
+            border: 1px solid var(--border-color) !important;
+            backdrop-filter: blur(10px) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer;
+            box-shadow: none !important;
+            padding: 0 !important;
+            transition: all 0.2s ease;
+        }
+        #logout-btn:hover, #download-profile-btn:hover {
+            border-color: var(--accent) !important;
+            transform: scale(1.05);
+        }
+        #logout-btn::after, #download-profile-btn::after { display: none; }
+        #logout-btn i, #logout-btn svg, #download-profile-btn i, #download-profile-btn svg {
+            width: 18px !important;
+            height: 18px !important;
+            color: var(--accent-2) !important;
+            display: block !important;
+            transition: color 0.2s ease;
+        }
+        #logout-btn:hover i, #logout-btn:hover svg, #download-profile-btn:hover i, #download-profile-btn:hover svg {
+            color: var(--accent) !important;
+        }
+        body.light #logout-btn i, body.light #logout-btn svg, body.light #download-profile-btn i, body.light #download-profile-btn svg {
+            color: var(--text-color) !important;
+        }
+        body.light #logout-btn:hover i, body.light #logout-btn:hover svg, body.light #download-profile-btn:hover i, body.light #download-profile-btn:hover svg {
+            color: var(--accent) !important;
+        }
 
         /* Feature grid (home page) */
         .feature-grid {
@@ -907,6 +981,57 @@
     </style>
 </head>
 <body>
+    <!-- Auth Container Overlay -->
+    <div id="auth-container" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; align-items: center; justify-content: center; z-index: 9999; background: var(--bg-color); padding: 2rem; box-sizing: border-box; overflow-y: auto;">
+        <div class="card" style="max-width: 480px; width: 100%; box-sizing: border-box; box-shadow: 0 30px 80px rgba(0,0,0,0.5);">
+            <div class="header-row" style="margin-bottom: 2rem; display: flex; align-items: center; gap: 15px;">
+                <div class="icon-badge" style="width: 50px; height: 50px;"><i data-lucide="shield-check" style="width: 24px; height: 24px; color: var(--accent-2);"></i></div>
+                <div class="header-text">
+                    <h1 style="font-size: 1.8rem; margin: 0;">Agent Platform</h1>
+                    <p class="subtitle" style="margin: 0; font-size: 0.85rem;">Sign up or log in to access your agents</p>
+                </div>
+            </div>
+            
+            <div class="auth-tabs" style="display: flex; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem;">
+                <button class="auth-tab active" onclick="switchAuthTab('login')" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 2px solid var(--accent); color: var(--text-color); font-weight: 600; cursor: pointer; transition: all 0.2s;">Log In</button>
+                <button class="auth-tab" onclick="switchAuthTab('signup')" style="flex: 1; padding: 1rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); font-weight: 600; cursor: pointer; transition: all 0.2s;">Sign Up</button>
+            </div>
+
+            <!-- Login Content -->
+            <div id="login-tab-content">
+                <div class="input-group" style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Email Address</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02); color: var(--text-color); font-size: 0.95rem; box-sizing: border-box;">
+                </div>
+                <button onclick="handleLogin()" style="width: 100%; padding: 0.85rem; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s;">Log In</button>
+                <div id="login-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 1rem; display: none;"></div>
+            </div>
+
+            <!-- Signup Content -->
+            <div id="signup-tab-content" style="display: none;">
+                <div class="input-group" style="margin-bottom: 1.2rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Email Address</label>
+                    <input type="email" id="signup-email" placeholder="you@example.com" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02); color: var(--text-color); font-size: 0.95rem; box-sizing: border-box;">
+                </div>
+                <div class="input-group" style="margin-bottom: 1.2rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Google Sheet ID (TRACKER_SPREADSHEET_ID)</label>
+                    <input type="text" id="signup-sheet-id" placeholder="e.g. 1aBCdeFgHijklMNoPqR..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: rgba(255,255,255,0.02); color: var(--text-color); font-size: 0.95rem; box-sizing: border-box;">
+                </div>
+                <div class="input-group" style="margin-bottom: 1.8rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-size: 0.85rem; font-weight: 600; color: var(--text-muted);">Upload Google token.json or user.json file</label>
+                    <div id="token-dropzone" style="border: 2px dashed var(--border-color); border-radius: 8px; padding: 1.5rem; text-align: center; cursor: pointer; background: rgba(255,255,255,0.01); transition: all 0.2s;">
+                        <i data-lucide="upload-cloud" style="width: 32px; height: 32px; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                        <div style="font-size: 0.85rem; color: var(--text-color); font-weight: 600;">Drag & drop token.json or user.json here or click to upload</div>
+                        <input type="file" id="token-file-input" accept=".json" style="display: none;">
+                        <div id="uploaded-file-name" style="font-size: 0.85rem; color: var(--accent-2); margin-top: 0.5rem; display: none; font-weight: 600;"></div>
+                    </div>
+                </div>
+                <button onclick="handleSignup()" style="width: 100%; padding: 0.85rem; background: var(--accent); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s;">Sign Up</button>
+                <div id="signup-error" style="color: #ef4444; font-size: 0.85rem; margin-top: 1rem; display: none;"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="orb3"></div>
     <div class="sidebar" style="display: none;">
         <div class="logo">
@@ -951,10 +1076,18 @@
                 <div id="topbar-date">--</div>
                 <div id="topbar-time">--:--:--</div>
             </div>
-            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
-                <i data-lucide="sun" class="icon-sun"></i>
-                <i data-lucide="moon" class="icon-moon"></i>
-            </button>
+            <div class="topbar-actions" style="display: flex; align-items: center; gap: 10px; pointer-events: auto;">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                    <i data-lucide="sun" class="icon-sun"></i>
+                    <i data-lucide="moon" class="icon-moon"></i>
+                </button>
+                <button id="download-profile-btn" onclick="downloadProfile()" title="Download Profile (user.json)">
+                    <i data-lucide="download"></i>
+                </button>
+                <button id="logout-btn" onclick="logout()" title="Logout">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
         </div>
 
         <!-- Home View -->
@@ -1014,6 +1147,15 @@
 
                 <div id="meeting-status" class="status">Processing...</div>
                 <div id="meeting-response" class="response"></div>
+            </div>
+
+            <div id="prompt-suggestions" style="margin-top: 2rem; width: 100%;">
+                <div style="font-size:0.8rem; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:6px; margin-bottom: 0.6rem;">
+                    <i data-lucide="sparkles" style="width:14px; height:14px; color:var(--accent-2);"></i> Suggested Prompts:
+                </div>
+                <div id="suggestions-container" style="display:flex; flex-direction:row; gap:12px; flex-wrap:wrap;">
+                    <div style="font-size:0.82rem; color:var(--text-muted);">Loading suggestions...</div>
+                </div>
             </div>
         </div>
 
@@ -1298,7 +1440,330 @@
     </div>
 
     <script>
+        // Intercept global fetch to handle 401 Unauthorized
+        const originalFetch = window.fetch;
+        window.fetch = async function (...args) {
+            const response = await originalFetch(...args);
+            if (response.status === 401) {
+                // Show auth screen
+                document.getElementById('auth-container').style.display = 'flex';
+                document.querySelector('.sidebar').style.display = 'none';
+                document.querySelector('.main-content').style.display = 'none';
+            }
+            return response;
+        };
+
+        let uploadedTokenData = null;
+        let uploadedBulkData = null;
+
+        // Initialize file upload handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropzone = document.getElementById('token-dropzone');
+            const fileInput = document.getElementById('token-file-input');
+            const fileNameDisplay = document.getElementById('uploaded-file-name');
+
+            if (dropzone && fileInput) {
+                dropzone.onclick = () => fileInput.click();
+                
+                dropzone.ondragover = (e) => {
+                    e.preventDefault();
+                    dropzone.style.borderColor = 'var(--accent)';
+                    dropzone.style.background = 'rgba(255,122,89,0.05)';
+                };
+
+                dropzone.ondragleave = () => {
+                    dropzone.style.borderColor = 'var(--border-color)';
+                    dropzone.style.background = 'rgba(255,255,255,0.01)';
+                };
+
+                dropzone.ondrop = (e) => {
+                    e.preventDefault();
+                    dropzone.style.borderColor = 'var(--border-color)';
+                    dropzone.style.background = 'rgba(255,255,255,0.01)';
+                    if (e.dataTransfer.files.length > 0) {
+                        handleFile(e.dataTransfer.files[0]);
+                    }
+                };
+
+                fileInput.onchange = () => {
+                    if (fileInput.files.length > 0) {
+                        handleFile(fileInput.files[0]);
+                    }
+                };
+            }
+
+            function handleFile(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const json = JSON.parse(e.target.result);
+                        
+                        // Check if it's user.json format (single user)
+                        if (json.email && json.token_data) {
+                            uploadedBulkData = null; // Clear bulk
+                            document.getElementById('signup-email').value = json.email;
+                            if (json.tracker_spreadsheet_id) {
+                                document.getElementById('signup-sheet-id').value = json.tracker_spreadsheet_id;
+                            }
+                            uploadedTokenData = json.token_data;
+                            fileNameDisplay.textContent = `✓ Loaded user profile: ${file.name}`;
+                            fileNameDisplay.style.display = 'block';
+                            return;
+                        }
+                        
+                        // Check if it's users.json format (multiple users)
+                        const keys = Object.keys(json);
+                        if (keys.length > 0 && json[keys[0]] && json[keys[0]].email && json[keys[0]].token_data) {
+                            uploadedBulkData = json;
+                            uploadedTokenData = null; // Clear single token
+                            
+                            const firstUser = json[keys[0]];
+                            document.getElementById('signup-email').value = firstUser.email;
+                            if (firstUser.tracker_spreadsheet_id) {
+                                document.getElementById('signup-sheet-id').value = firstUser.tracker_spreadsheet_id;
+                            }
+                            
+                            const emails = Object.keys(json).join(', ');
+                            fileNameDisplay.textContent = `✓ Loaded profiles: [${emails}]`;
+                            fileNameDisplay.style.display = 'block';
+                            return;
+                        }
+
+                        // Fallback: Check if it's token.json format
+                        if (!json.token && !json.refresh_token) {
+                            alert("Invalid JSON file. It must contain Google OAuth token data or a user profile.");
+                            return;
+                        }
+                        uploadedBulkData = null; // Clear bulk
+                        uploadedTokenData = json;
+                        fileNameDisplay.textContent = `✓ Loaded token: ${file.name}`;
+                        fileNameDisplay.style.display = 'block';
+                    } catch (err) {
+                        alert("Error parsing JSON file: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            checkAuth();
+        });
+
+        async function checkAuth() {
+            try {
+                const res = await originalFetch('/api/auth-status');
+                const data = await res.json();
+                if (data.authenticated) {
+                    document.getElementById('auth-container').style.display = 'none';
+                    // Show standard views
+                    const sidebar = document.querySelector('.sidebar');
+                    const mainContent = document.querySelector('.main-content');
+                    sidebar.style.display = 'flex';
+                    mainContent.style.display = 'flex';
+                    
+                    const activeNav = document.querySelector('.nav-item.active');
+                    if (activeNav) {
+                        const viewId = activeNav.getAttribute('data-view');
+                        switchView(viewId, activeNav);
+                    } else {
+                        switchView('home-view', document.querySelector('.nav-item[data-view="home-view"]'));
+                    }
+                } else {
+                    document.getElementById('auth-container').style.display = 'flex';
+                    document.querySelector('.sidebar').style.display = 'none';
+                    document.querySelector('.main-content').style.display = 'none';
+                }
+            } catch (err) {
+                console.error("Error checking auth status:", err);
+            }
+        }
+
+        function switchAuthTab(tab) {
+            const loginTab = document.getElementById('login-tab-content');
+            const signupTab = document.getElementById('signup-tab-content');
+            const tabs = document.querySelectorAll('.auth-tab');
+            
+            if (tab === 'login') {
+                loginTab.style.display = 'block';
+                signupTab.style.display = 'none';
+                tabs[0].classList.add('active');
+                tabs[0].style.borderBottomColor = 'var(--accent)';
+                tabs[0].style.color = 'var(--text-color)';
+                tabs[1].classList.remove('active');
+                tabs[1].style.borderBottomColor = 'transparent';
+                tabs[1].style.color = 'var(--text-muted)';
+            } else {
+                loginTab.style.display = 'none';
+                signupTab.style.display = 'block';
+                tabs[1].classList.add('active');
+                tabs[1].style.borderBottomColor = 'var(--accent)';
+                tabs[1].style.color = 'var(--text-color)';
+                tabs[0].classList.remove('active');
+                tabs[0].style.borderBottomColor = 'transparent';
+                tabs[0].style.color = 'var(--text-muted)';
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const errorDiv = document.getElementById('login-error');
+            if (!email) {
+                errorDiv.textContent = "Please enter your email address.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+            errorDiv.style.display = 'none';
+            try {
+                const res = await originalFetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await checkAuth();
+                } else {
+                    errorDiv.textContent = data.error || "Login failed.";
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = "An error occurred during login.";
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function handleSignup() {
+            const errorDiv = document.getElementById('signup-error');
+            errorDiv.style.display = 'none';
+
+            // Handle bulk upload of users.json
+            if (uploadedBulkData) {
+                try {
+                    const res = await originalFetch('/api/signup-bulk', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(uploadedBulkData)
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        uploadedBulkData = null;
+                        await checkAuth();
+                    } else {
+                        errorDiv.textContent = data.error || "Bulk signup failed.";
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    errorDiv.textContent = "An error occurred during bulk signup.";
+                    errorDiv.style.display = 'block';
+                }
+                return;
+            }
+
+            // Standard signup
+            const email = document.getElementById('signup-email').value.trim();
+            const sheetId = document.getElementById('signup-sheet-id').value.trim();
+            
+            if (!email || !sheetId || !uploadedTokenData) {
+                errorDiv.textContent = "All fields (Email, Sheet ID, and token.json upload) are required.";
+                errorDiv.style.display = 'block';
+                return;
+            }
+            try {
+                const res = await originalFetch('/api/signup', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email,
+                        tracker_spreadsheet_id: sheetId,
+                        token_data: uploadedTokenData
+                    })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await checkAuth();
+                } else {
+                    errorDiv.textContent = data.error || "Signup failed.";
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                errorDiv.textContent = "An error occurred during signup.";
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function logout() {
+            try {
+                await originalFetch('/api/logout', { method: 'POST' });
+                uploadedTokenData = null;
+                uploadedBulkData = null;
+                const fileNameDisplay = document.getElementById('uploaded-file-name');
+                if (fileNameDisplay) fileNameDisplay.style.display = 'none';
+                document.getElementById('login-email').value = '';
+                document.getElementById('signup-email').value = '';
+                document.getElementById('signup-sheet-id').value = '';
+                
+                await checkAuth();
+            } catch (err) {
+                console.error("Logout error:", err);
+            }
+        }
+
+        async function downloadProfile() {
+            try {
+                const res = await originalFetch('/api/export-profile');
+                if (!res.ok) {
+                    alert("Failed to export profile.");
+                    return;
+                }
+                const data = await res.json();
+                const blob = new Blob([JSON.stringify(data, null, 4)], { type: 'application/json' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'user.json';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (err) {
+                console.error("Error exporting profile:", err);
+                alert("An error occurred while exporting profile.");
+            }
+        }
+
         lucide.createIcons();
+        fetchSuggestedPrompts();
+
+        async function fetchSuggestedPrompts() {
+            const container = document.getElementById('suggestions-container');
+            if (!container) return;
+            container.innerHTML = '<div style="font-size:0.82rem; color:var(--text-muted);">Generating suggestions...</div>';
+            try {
+                const res = await fetch('/api/suggest-prompts');
+                const data = await res.json();
+                if (data.prompts && data.prompts.length >= 2) {
+                    container.innerHTML = '';
+                    data.prompts.forEach(prompt => {
+                        const chip = document.createElement('button');
+                        chip.className = 'suggestion-chip';
+                        chip.innerHTML = `<i data-lucide="sparkles" style="width:12px; height:12px; color:var(--accent-2); margin-right:4px;"></i> ${prompt}`;
+                        chip.onclick = () => {
+                            const textarea = document.getElementById('meeting-prompt');
+                            if (textarea) {
+                                textarea.value = prompt;
+                                textarea.focus();
+                            }
+                        };
+                        container.appendChild(chip);
+                    });
+                    lucide.createIcons();
+                } else {
+                    container.innerHTML = '<div style="font-size:0.82rem; color:var(--text-muted);">Failed to load suggestions.</div>';
+                }
+            } catch (err) {
+                console.error("Error fetching suggestions:", err);
+                container.innerHTML = '<div style="font-size:0.82rem; color:var(--text-muted);">Failed to load suggestions.</div>';
+            }
+        }
 
         function switchView(viewId, element) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1317,15 +1782,18 @@
             const mainContent = document.querySelector('.main-content');
             if (viewId === 'mail-view') {
                 mainContent.style.alignItems = 'stretch';
-                mainContent.style.padding = '0';
+                mainContent.style.padding = '5.5rem 0 0 0';
                 backToMailList(); // Ensure list is shown
             } else {
                 mainContent.style.alignItems = 'center';
-                mainContent.style.padding = '3rem';
+                mainContent.style.padding = '5.5rem 3rem 3rem';
             }
 
             if (viewId === 'pipeline-view') {
                 fetchPipelineData();
+            }
+            if (viewId === 'meeting-view') {
+                fetchSuggestedPrompts();
             }
         }
 
@@ -1837,7 +2305,7 @@
         }
 
         function getSentimentCategory(label) {
-            if (["Positive Follow-up", "Offer Stage"].includes(label)) {
+            if (["Positive Follow-up", "Offer Stage", "Urgent Action Required"].includes(label)) {
                 return "Warm/Positive";
             } else if (label === "Rejection") {
                 return "Rejection";

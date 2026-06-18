@@ -16,3 +16,7 @@ uploads/
 
 # OS
 .DS_Store
+
+# Local State Databases
+users.json
+classified_emails*.json

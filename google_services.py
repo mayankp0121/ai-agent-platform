@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
@@ -10,6 +11,10 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from openai import OpenAI
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = [
@@ -20,10 +25,24 @@ SCOPES = [
 ]
 
 class GoogleServices:
-    def __init__(self, credentials_path='credentials.json', token_path='token.json'):
+    def __init__(self, credentials_path='credentials.json', token_path='token.json', token_data=None, tracker_spreadsheet_id=None, user_email=None):
         self.credentials_path = credentials_path
         self.token_path = token_path
+        self.token_data = token_data
+        self.tracker_spreadsheet_id = tracker_spreadsheet_id
+        self.user_email = user_email
         self.creds = self._authenticate()
+        
+        api_key = os.getenv("GROQ_API_KEY") or os.getenv("OPENAI_API_KEY")
+        base_url = os.getenv("GROQ_API_BASE") or os.getenv("OPENAI_API_BASE")
+        self.model = os.getenv("GROQ_MODEL_NAME") or os.getenv("OPENAI_MODEL_NAME") or "openai/gpt-oss-120b"
+        self.openai_client = OpenAI(api_key=api_key, base_url=base_url) if base_url else OpenAI(api_key=api_key)
+
+    def _get_cache_file(self):
+        if self.user_email:
+            safe_email = "".join([c if c.isalnum() else "_" for c in self.user_email])
+            return f"classified_emails_{safe_email}.json"
+        return "classified_emails.json"
 
     @property
     def calendar_service(self):
@@ -39,7 +58,12 @@ class GoogleServices:
 
     def _authenticate(self):
         creds = None
-        if os.path.exists(self.token_path):
+        if self.token_data:
+            try:
+                creds = Credentials.from_authorized_user_info(self.token_data, SCOPES)
+            except Exception as e:
+                print(f"Error loading from token_data: {e}")
+        elif os.path.exists(self.token_path):
             creds = Credentials.from_authorized_user_file(self.token_path, SCOPES)
         
         if not creds or not creds.valid:
@@ -58,8 +82,9 @@ class GoogleServices:
                 flow = InstalledAppFlow.from_client_secrets_file(self.credentials_path, SCOPES)
                 creds = flow.run_local_server(port=0)
             
-            with open(self.token_path, 'w') as token:
-                token.write(creds.to_json())
+            if not self.token_data:
+                with open(self.token_path, 'w') as token:
+                    token.write(creds.to_json())
         return creds
 
     def create_calendar_event(self, summary, start_time, duration_minutes, attendee_email=None, description="", ignore_event_id=None):
@@ -558,6 +583,9 @@ class GoogleServices:
             return {'error': str(error)}
 
     def get_or_create_tracker_sheet(self):
+        if self.tracker_spreadsheet_id:
+            return self.tracker_spreadsheet_id
+            
         from dotenv import load_dotenv
         load_dotenv()
         spreadsheet_id = os.getenv("TRACKER_SPREADSHEET_ID")
@@ -613,76 +641,158 @@ class GoogleServices:
         except HttpError as error:
             print(f"An error occurred logging to sheet: {error}")
 
-    def classify_email(self, subject, snippet):
-        text = f"{subject} {snippet}".lower()
+    def classify_email(self, subject, snippet, message_id=None):
+        import hashlib
+        cache_key = message_id if message_id else hashlib.md5(f"{subject}||{snippet}".encode('utf-8')).hexdigest()
         
-        # 1. Rejection
-        rejection_keywords = [
-            "not moving forward", "unfortunate", "thank you for your interest", "thanks for your interest", 
-            "unable to move", "another candidate", "filled the position", "decided to move forward with other", 
-            "decided to go with", "not selected", "regret to inform", "unsuccessful", 
-            "position has been filled", "rejected", "rejection", "unfortunately", "can't processed",
-            "can't proceed", "cannot proceed", "unable to proceed", "decided not to", "no longer considering",
-            "will not be moving forward", "not to proceed", "unable to move forward", "not move forward"
-        ]
-        if any(kw in text for kw in rejection_keywords):
-            return {
+        # Check cache
+        cache = {}
+        cache_file = self._get_cache_file()
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, 'r') as f:
+                    cache = json.load(f)
+            except Exception:
+                cache = {}
+                
+        if cache_key in cache:
+            if isinstance(cache[cache_key], dict) and "sentiment" in cache[cache_key]:
+                return cache[cache_key]["sentiment"]
+            return cache[cache_key]
+
+        label = None
+        try:
+            prompt = (
+                "You are an email classifier for a job search tracker platform. "
+                "Analyze the following email subject and snippet, and determine the sentiment/category.\n\n"
+                f"Subject: {subject}\n"
+                f"Snippet: {snippet}\n\n"
+                "Classify the email into one of these exact categories:\n"
+                "1. 'Rejection' - if it is a rejection email (e.g. not moving forward, thank you for your interest, unfortunate, position filled).\n"
+                "2. 'Offer Stage' - if it is a job offer, offer letter, or congrats on selection.\n"
+                "3. 'Urgent Action Required' - if the email is about scheduling an interview, booking a time slot, select a slot, calendar invitation, or requires immediate scheduling/meeting action.\n"
+                "4. 'Positive Follow-up' - if it is a positive follow-up, coding test, technical assessment, or next steps that are not immediately an interview slot booking/scheduling request.\n"
+                "5. 'General Update' - for any other general update or response.\n\n"
+                "Respond ONLY with a JSON object in this format:\n"
+                '{"label": "CategoryName"}'
+            )
+            response = self.openai_client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a precise JSON classifier. Only respond with valid JSON containing the 'label' key."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.0
+            )
+            content = response.choices[0].message.content.strip()
+            
+            # Clean markdown JSON wrapping if present
+            if content.startswith("```"):
+                lines = content.splitlines()
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                content = "\n".join(lines).strip()
+                
+            data = json.loads(content)
+            label = data.get("label")
+        except Exception as e:
+            print(f"Error classifying email with LLM: {e}. Falling back to keyword classification.")
+
+        if not label:
+            # Keyword fallback
+            text = f"{subject} {snippet}".lower()
+            
+            # 1. Rejection
+            rejection_keywords = [
+                "not moving forward", "unfortunate", "thank you for your interest", "thanks for your interest", 
+                "unable to move", "another candidate", "filled the position", "decided to move forward with other", 
+                "decided to go with", "not selected", "regret to inform", "unsuccessful", 
+                "position has been filled", "rejected", "rejection", "unfortunately", "can't processed",
+                "can't proceed", "cannot proceed", "unable to proceed", "decided not to", "no longer considering",
+                "will not be moving forward", "not to proceed", "unable to move forward", "not move forward"
+            ]
+            if any(kw in text for kw in rejection_keywords):
+                label = "Rejection"
+            
+            # 2. Offer Stage
+            elif any(kw in text for kw in [
+                "offer letter", "congratulations", "job offer", "offering you", "onboard", "onboarding", 
+                "compensation details", "selected for the role", "happy to offer"
+            ]):
+                label = "Offer Stage"
+                
+            # 3. Urgent Action Required
+            elif any(kw in text for kw in [
+                "action required", "urgent", "update required", "please reply", "call me", "asap", 
+                "scheduling", "schedule an interview", "book a time", "select a slot", "availability", 
+                "choose a slot", "book your slot", "pick a time", "schedule your", "needs response", 
+                "schedule today"
+            ]):
+                label = "Urgent Action Required"
+                
+            # 4. Positive Follow-up
+            elif any(kw in text for kw in [
+                "shortlisted", "next steps", "interview scheduled", "interview invitation", "technical round", 
+                "assessment", "round 1", "round 2", "round 3", "coding test", "interview request", "discuss",
+                "conversation", "touch base", "chat about"
+            ]):
+                label = "Positive Follow-up"
+                
+            else:
+                label = "General Update"
+
+        # Return dict based on final label
+        if label == "Rejection":
+            res = {
                 "label": "Rejection",
-                "color": "#ef4444", # Red
+                "color": "#ef4444",
                 "bg": "rgba(239, 68, 68, 0.15)",
                 "border": "rgba(239, 68, 68, 0.3)"
             }
-            
-        # 2. Offer Stage
-        offer_keywords = [
-            "offer letter", "congratulations", "job offer", "offering you", "onboard", "onboarding", 
-            "compensation details", "selected for the role", "happy to offer"
-        ]
-        if any(kw in text for kw in offer_keywords):
-            return {
+        elif label == "Offer Stage":
+            res = {
                 "label": "Offer Stage",
-                "color": "#10b981", # Green
+                "color": "#10b981",
                 "bg": "rgba(16, 185, 129, 0.15)",
                 "border": "rgba(16, 185, 129, 0.3)"
             }
-            
-        # 3. Urgent Action Required
-        urgent_keywords = [
-            "action required", "urgent", "update required", "please reply", "call me", "asap", 
-            "scheduling", "schedule an interview", "book a time", "select a slot", "availability", 
-            "choose a slot", "book your slot", "pick a time", "schedule your", "needs response", 
-            "schedule today"
-        ]
-        if any(kw in text for kw in urgent_keywords):
-            return {
+        elif label == "Urgent Action Required":
+            res = {
                 "label": "Urgent Action Required",
-                "color": "#f59e0b", # Amber/Yellow
+                "color": "#f59e0b",
                 "bg": "rgba(245, 158, 11, 0.15)",
                 "border": "rgba(245, 158, 11, 0.3)",
                 "animate": True
             }
-            
-        # 4. Positive Follow-up
-        positive_keywords = [
-            "shortlisted", "next steps", "interview scheduled", "interview invitation", "technical round", 
-            "assessment", "round 1", "round 2", "round 3", "coding test", "interview request", "discuss",
-            "conversation", "touch base", "chat about"
-        ]
-        if any(kw in text for kw in positive_keywords):
-            return {
+        elif label == "Positive Follow-up":
+            res = {
                 "label": "Positive Follow-up",
-                "color": "#3b82f6", # Blue
+                "color": "#3b82f6",
                 "bg": "rgba(59, 130, 246, 0.15)",
                 "border": "rgba(59, 130, 246, 0.3)"
             }
-            
-        # Default / General Update
-        return {
-            "label": "General Update",
-            "color": "#94a3b8", # Slate/Gray
-            "bg": "rgba(148, 163, 184, 0.15)",
-            "border": "rgba(148, 163, 184, 0.3)"
-        }
+        else:
+            res = {
+                "label": "General Update",
+                "color": "#94a3b8",
+                "bg": "rgba(148, 163, 184, 0.15)",
+                "border": "rgba(148, 163, 184, 0.3)"
+            }
+
+        # Save to cache
+        try:
+            if cache_key in cache and isinstance(cache[cache_key], dict) and "sentiment" in cache[cache_key]:
+                cache[cache_key]["sentiment"] = res
+            else:
+                cache[cache_key] = res
+            with open(cache_file, 'w') as f:
+                json.dump(cache, f, indent=4)
+        except Exception as e:
+            print(f"Error saving classification cache: {e}")
+
+        return res
 
     def get_important_emails(self, max_results=15):
         try:
@@ -697,40 +807,66 @@ class GoogleServices:
             results = self.gmail_service.users().messages().list(userId='me', q=query, maxResults=max_results).execute()
             messages = results.get('messages', [])
 
+            # Check cache first
+            cache = {}
+            cache_file = self._get_cache_file()
+            if os.path.exists(cache_file):
+                try:
+                    with open(cache_file, 'r') as f:
+                        cache = json.load(f)
+                except Exception:
+                    cache = {}
+
             email_data = []
+            cache_updated = False
             for msg in messages:
-                msg_detail = self.gmail_service.users().messages().get(userId='me', id=msg['id'], format='metadata', metadataHeaders=['Subject', 'From', 'Date']).execute()
-                headers = msg_detail.get('payload', {}).get('headers', [])
-                
-                subject = "No Subject"
-                sender = "Unknown"
-                date = ""
-                
-                for header in headers:
-                    name = header.get('name', '').lower()
-                    if name == 'subject':
-                        subject = header.get('value')
-                    elif name == 'from':
-                        sender = header.get('value')
-                    elif name == 'date':
-                        date = header.get('value')
-                
-                # Check for UNREAD label
-                labels = msg_detail.get('labelIds', [])
-                is_unread = 'UNREAD' in labels
-                snippet = msg_detail.get('snippet', '')
-                sentiment = self.classify_email(subject, snippet)
-                
-                email_data.append({
-                    'id': msg['id'],
-                    'subject': subject,
-                    'from': sender,
-                    'date': date,
-                    'snippet': snippet,
-                    'unread': is_unread,
-                    'sentiment': sentiment
-                })
-                
+                msg_id = msg['id']
+                if msg_id in cache and isinstance(cache[msg_id], dict) and "subject" in cache[msg_id]:
+                    # Load from cache
+                    email_data.append(cache[msg_id])
+                else:
+                    msg_detail = self.gmail_service.users().messages().get(userId='me', id=msg_id, format='metadata', metadataHeaders=['Subject', 'From', 'Date']).execute()
+                    headers = msg_detail.get('payload', {}).get('headers', [])
+                    
+                    subject = "No Subject"
+                    sender = "Unknown"
+                    date = ""
+                    
+                    for header in headers:
+                        name = header.get('name', '').lower()
+                        if name == 'subject':
+                            subject = header.get('value')
+                        elif name == 'from':
+                            sender = header.get('value')
+                        elif name == 'date':
+                            date = header.get('value')
+                    
+                    # Check for UNREAD label
+                    labels = msg_detail.get('labelIds', [])
+                    is_unread = 'UNREAD' in labels
+                    snippet = msg_detail.get('snippet', '')
+                    sentiment = self.classify_email(subject, snippet, message_id=msg_id)
+                    
+                    email_entry = {
+                        'id': msg_id,
+                        'subject': subject,
+                        'from': sender,
+                        'date': date,
+                        'snippet': snippet,
+                        'unread': is_unread,
+                        'sentiment': sentiment
+                    }
+                    email_data.append(email_entry)
+                    cache[msg_id] = email_entry
+                    cache_updated = True
+                    
+            if cache_updated:
+                try:
+                    with open(cache_file, 'w') as f:
+                        json.dump(cache, f, indent=4)
+                except Exception as e:
+                    print(f"Error saving updated cache: {e}")
+                    
             return email_data
         except HttpError as error:
             print(f"An error occurred fetching emails: {error}")
@@ -747,6 +883,19 @@ class GoogleServices:
                         'removeLabelIds': ['UNREAD']
                     }
                 ).execute()
+                
+                # Update local cache to mark as read
+                cache_file = self._get_cache_file()
+                if os.path.exists(cache_file):
+                    try:
+                        with open(cache_file, 'r') as f:
+                            cache = json.load(f)
+                        if message_id in cache and isinstance(cache[message_id], dict):
+                            cache[message_id]['unread'] = False
+                            with open(cache_file, 'w') as f:
+                                json.dump(cache, f, indent=4)
+                    except Exception as ce:
+                        print(f"Error updating cache on read: {ce}")
             except Exception as e:
                 print(f"Error marking email as read: {e}")
 
